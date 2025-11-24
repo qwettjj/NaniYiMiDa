@@ -57,7 +57,7 @@ logs/
 Thumbs.db
 
 # Application Properties (重要：忽略实际配置文件)
-src/main/resources/application.properties
+src/main/resources/application.properties.template
 src/main/resources/application-*.properties
 
 # 但保留模板文件（模板文件应该被跟踪）
