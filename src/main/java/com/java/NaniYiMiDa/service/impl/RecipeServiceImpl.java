@@ -266,92 +266,45 @@ public class RecipeServiceImpl implements RecipeService {
 	}
 
 	@Override
-	public List<RecipeVO> searchRecipes(String keyword, Date startDate) {
-		if (keyword == null || keyword.isBlank()) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST, "不能搜索空字符");
+	public org.springframework.data.domain.Page<RecipeVO> searchRecipes(String keyword, Date startDate, com.java.NaniYiMiDa.enumx.IngredientEnum tag, org.springframework.data.domain.Pageable pageable) {
+		boolean isKeywordPresent = keyword != null && !keyword.isBlank();
+		boolean isTagPresent = tag != null;
+
+		if (!isKeywordPresent && !isTagPresent) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "keyword 或 tag 必须至少提供其一");
 		}
 
-		// 使用分页遍历，避免无限循环与 List#getLast() 不存在的问题
-		Date currentStartDate = startDate == null ? new Date(0) : startDate;
-		List<RecipeVO> matchedRecipes = new ArrayList<>();
-		int page = 0;
-		final int pageSize = 10;
-
-		while (matchedRecipes.size() < 10) {
-			PageRequest pageRequest = PageRequest.of(
-					page,
-					pageSize,
-					Sort.by(Sort.Direction.DESC, "createTime")
-			);
-
-			Page<Recipe> recipePage = recipeRepository.findByStatusAndCreateTimeAfter(RecipeStatus.PUBLISHED, currentStartDate, pageRequest);
-
-			if (recipePage == null || recipePage.getContent().isEmpty()) {
-				break;
-			}
-
-			for (Recipe recipe : recipePage.getContent()) {
-				if (recipeMatcher.matches(recipe, keyword)) {
-					matchedRecipes.add(recipe.toVO());
-					if (matchedRecipes.size() >= 10) break;
-				}
-			}
-
-			List<Recipe> pageContent = recipePage.getContent();
-			if (!pageContent.isEmpty()) {
-				Date lastCreateTime = pageContent.get(pageContent.size() - 1).getCreateTime();
-				if (!lastCreateTime.equals(currentStartDate)) {
-					currentStartDate = lastCreateTime;
-					page = 0; // 从新的时间窗口重新从第一页开始
-				} else {
-					// 时间未前进则按页推进
-					page++;
-				}
-			} else {
-				break;
-			}
-
-			if (!recipePage.hasNext() && matchedRecipes.size() < 10) {
-				break;
-			}
+		Page<Recipe> page;
+		if (isTagPresent && isKeywordPresent) {
+			page = recipeRepository.searchByStatusAndStartDateAndKeywordAndIngredient(RecipeStatus.PUBLISHED, startDate, keyword.trim(), tag, pageable);
+		} else if (isTagPresent) {
+			page = recipeRepository.searchByStatusAndStartDateAndIngredient(RecipeStatus.PUBLISHED, startDate, tag, pageable);
+		} else {
+			page = recipeRepository.searchByStatusAndStartDateAndKeyword(RecipeStatus.PUBLISHED, startDate, keyword.trim(), pageable);
 		}
 
-		return matchedRecipes;
+		return page.map(Recipe::toVO);
 	}
 
 	@Override
-	public List<RecipeVO> getRecentRecipes(Date startDate) {
-		PageRequest pageRequest = PageRequest.of(
-				0,
-				10,
-				Sort.by(Sort.Direction.DESC, "createTime")
-		);
-
+	public org.springframework.data.domain.Page<RecipeVO> getRecentRecipes(Date startDate, org.springframework.data.domain.Pageable pageable) {
 		Page<Recipe> recipePage;
 		if (startDate == null) {
-			recipePage = recipeRepository.findByStatus(RecipeStatus.PUBLISHED, pageRequest);
+			recipePage = recipeRepository.findByStatus(RecipeStatus.PUBLISHED, pageable);
 		} else {
-			recipePage = recipeRepository.findByStatusAndCreateTimeAfter(RecipeStatus.PUBLISHED, startDate, pageRequest);
+			recipePage = recipeRepository.findByStatusAndCreateTimeAfter(RecipeStatus.PUBLISHED, startDate, pageable);
 		}
 
-		return recipePage.getContent().stream()
-				.map(Recipe::toVO)
-				.collect(Collectors.toList());
+		return recipePage.map(Recipe::toVO);
 	}
 
 	@Override
-	public List<RecipeVO> getUserRecipesById(Long userId, Date startDate) {
+	public org.springframework.data.domain.Page<RecipeVO> getUserRecipesById(Long userId, Date startDate, org.springframework.data.domain.Pageable pageable) {
 		if (userId == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST,"用户ID不能为空");
 		}
 
 		Long currentUserId = requireCurrentUser().getUserId();
-
-		PageRequest pageRequest = PageRequest.of(
-				0,
-				10,
-				Sort.by(Sort.Direction.DESC, "createTime")
-		);
 
 		Page<Recipe> recipePage;
 		boolean isCurrentUser = currentUserId.equals(userId);
@@ -359,28 +312,26 @@ public class RecipeServiceImpl implements RecipeService {
 		if (isCurrentUser) {
 			if (startDate == null) {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusNot(
-						userId, RecipeStatus.DRAFT, pageRequest
+						userId, RecipeStatus.DRAFT, pageable
 				);
 			} else {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusNotAndCreateTimeAfter(
-						userId, RecipeStatus.DRAFT, startDate, pageRequest
+						userId, RecipeStatus.DRAFT, startDate, pageable
 				);
 			}
 		} else {
 			if (startDate == null) {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatus(
-						userId, RecipeStatus.PUBLISHED, pageRequest
+						userId, RecipeStatus.PUBLISHED, pageable
 				);
 			} else {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusAndCreateTimeAfter(
-						userId, RecipeStatus.PUBLISHED, startDate, pageRequest
+						userId, RecipeStatus.PUBLISHED, startDate, pageable
 				);
 			}
 		}
 
-		return recipePage.getContent().stream()
-				.map(Recipe::toVO)
-				.collect(Collectors.toList());
+		return recipePage.map(Recipe::toVO);
 	}
 
 	@Override

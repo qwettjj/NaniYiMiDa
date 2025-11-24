@@ -79,25 +79,18 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public List<HistoryVO> getCurrentUserHistory(Date startTime){
+    public org.springframework.data.domain.Page<HistoryVO> getCurrentUserHistory(Date startTime, org.springframework.data.domain.Pageable pageable){
         User user = requireCurrentUser();
         Long userId = user.getUserId();
 
-        PageRequest pageRequest = PageRequest.of(
-                0,
-                10,
-            Sort.by(Sort.Direction.DESC, "createTime")
-        );
-
-
-        List<History> histories = historyRepository.findByUserIdAndCreateTimeAfter(userId, startTime ,pageRequest);
-
-        List<HistoryVO> historyVOList = new ArrayList<>();
-        for(History history : histories){
-            historyVOList.add(history.ToVO());
+        org.springframework.data.domain.Page<History> page;
+        if (startTime == null) {
+            page = historyRepository.findByUserId(userId, pageable);
+        } else {
+            page = historyRepository.findByUserIdAndCreateTimeAfter(userId, startTime, pageable);
         }
 
-        return historyVOList;
+        return page.map(History::ToVO);
     }
 
     @NonNull

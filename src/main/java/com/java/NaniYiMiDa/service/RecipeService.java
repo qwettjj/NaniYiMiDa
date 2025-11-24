@@ -34,11 +34,11 @@ public interface RecipeService {
 
 	RecipeIngredientVO setRecipeIngredientTag(Long recipeId, IngredientEnum ingredient);
 
-	List<RecipeVO> searchRecipes(String keyword,Date startDate);
+	org.springframework.data.domain.Page<RecipeVO> searchRecipes(String keyword, Date startDate, com.java.NaniYiMiDa.enumx.IngredientEnum tag, org.springframework.data.domain.Pageable pageable);
 
-	List<RecipeVO> getRecentRecipes(Date startDate);
+	org.springframework.data.domain.Page<RecipeVO> getRecentRecipes(Date startDate, org.springframework.data.domain.Pageable pageable);
 
-	List<RecipeVO> getUserRecipesById(Long userId,Date startDate);
+	org.springframework.data.domain.Page<RecipeVO> getUserRecipesById(Long userId, Date startDate, org.springframework.data.domain.Pageable pageable);
 
 	List<RecipeVO> getCurrentUserDraft();
 }

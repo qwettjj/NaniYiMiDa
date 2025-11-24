@@ -10,6 +10,10 @@ import com.java.NaniYiMiDa.vo.ResultVO;
 
 import java.util.Date;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -77,8 +81,13 @@ public class RecipeController {
 	}
 
 	@GetMapping("/search")
-	public ResultVO<List<RecipeVO>> searchRecipes(@RequestParam String keyword,@RequestParam Date startDate) {
-		return ResultVO.buildSuccess(recipeService.searchRecipes(keyword, startDate));
+	public ResultVO<org.springframework.data.domain.Page<RecipeVO>> searchRecipes(
+			@RequestParam(required = false) String keyword,
+			@RequestParam(required = false) Date startDate,
+			@RequestParam(required = false) IngredientEnum tag,
+			@org.springframework.data.web.PageableDefault(page = 0, size = 10, sort = "createTime", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable
+	) {
+		return ResultVO.buildSuccess(recipeService.searchRecipes(keyword, startDate, tag, pageable));
 	}
 
 	@PutMapping("/{recipeId}/ingredient/description")
@@ -93,13 +102,20 @@ public class RecipeController {
 	}
 
 	@GetMapping("/getRecentRecipe")
-	public ResultVO<List<RecipeVO>> getRecentRecipe(@RequestParam Date startDate) {
-		return ResultVO.buildSuccess(recipeService.getRecentRecipes(startDate));
+	public ResultVO<Page<RecipeVO>> getRecentRecipe(
+			@RequestParam(required = false) Date startDate,
+			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
+	) {
+		return ResultVO.buildSuccess(recipeService.getRecentRecipes(startDate, pageable));
 	}
 
 	@GetMapping("/recipe/{userId}")
-	public ResultVO<List<RecipeVO>> getUserRecipe(@PathVariable Long userId,@RequestParam Date startDate) {
-		return ResultVO.buildSuccess(recipeService.getUserRecipesById(userId, startDate));
+	public ResultVO<Page<RecipeVO>> getUserRecipe(
+			@PathVariable Long userId,
+			@RequestParam(required = false) Date startDate,
+			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
+	) {
+		return ResultVO.buildSuccess(recipeService.getUserRecipesById(userId, startDate, pageable));
 	}
 
 	@GetMapping("getCurrentUserDraft")

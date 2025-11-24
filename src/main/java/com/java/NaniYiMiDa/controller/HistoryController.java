@@ -5,6 +5,10 @@ import com.java.NaniYiMiDa.vo.HistoryVO;
 import com.java.NaniYiMiDa.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.Date;
 import java.util.List;
@@ -27,7 +31,10 @@ public class HistoryController {
     }
 
     @GetMapping("/getCurrentUserHistory")
-    public ResultVO<List<HistoryVO>> getCurrentUserHistory(@RequestParam Date startTime) {
-        return ResultVO.buildSuccess(historyService.getCurrentUserHistory(startTime));
+    public ResultVO<Page<HistoryVO>> getCurrentUserHistory(
+            @RequestParam(required = false) Date startTime,
+            @PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResultVO.buildSuccess(historyService.getCurrentUserHistory(startTime, pageable));
     }
 }

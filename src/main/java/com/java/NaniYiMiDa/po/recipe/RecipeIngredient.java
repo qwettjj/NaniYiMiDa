@@ -15,7 +15,7 @@ public class RecipeIngredient {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	private Long ingredientId;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "recipe_id", unique = true)
@@ -30,7 +30,7 @@ public class RecipeIngredient {
 
 	public RecipeIngredientVO toVO() {
 		RecipeIngredientVO vo = new RecipeIngredientVO();
-		vo.setIngredientId(id);
+		vo.setIngredientId(ingredientId);
 		vo.setIngredient(ingredient);
 		vo.setDescription(description);
 		return vo;

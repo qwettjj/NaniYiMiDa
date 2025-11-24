@@ -1,7 +1,8 @@
 package com.java.NaniYiMiDa.repository;
 
 import com.java.NaniYiMiDa.po.History;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Date;
@@ -12,5 +13,7 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
 
     History findByUserIdAndRecipeId(Long userId, Long recipeId);
 
-    List<History> findByUserIdAndCreateTimeAfter(Long userId, Date startTime, PageRequest pageRequest);
+    Page<History> findByUserIdAndCreateTimeAfter(Long userId, Date startTime, Pageable pageable);
+
+    Page<History> findByUserId(Long userId, Pageable pageable);
 }

@@ -10,5 +10,5 @@ public interface HistoryService {
 
     Void deleteHistory(Long recipeId);
 
-    List<HistoryVO> getCurrentUserHistory(Date startDate);
+    org.springframework.data.domain.Page<HistoryVO> getCurrentUserHistory(Date startDate, org.springframework.data.domain.Pageable pageable);
 }
