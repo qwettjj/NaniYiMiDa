@@ -13,8 +13,8 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BusinessException.class)
 	public ResponseEntity<ResultVO<Void>> handleBusiness(BusinessException e) {
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-			.body(ResultVO.buildFailure(e.getErrorCode(), e.getMessage()));
+		// Always return HTTP 200 and put business error code in response body
+		return ResponseEntity.ok(ResultVO.buildFailure(e.getErrorCode(), e.getMessage()));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -22,13 +22,11 @@ public class GlobalExceptionHandler {
 		String message = e.getBindingResult().getFieldErrors().stream().findFirst()
 			.map(f -> f.getField() + " " + f.getDefaultMessage())
 			.orElse("参数校验失败");
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-			.body(ResultVO.buildFailure(ErrorCode.BAD_REQUEST, message));
+		return ResponseEntity.ok(ResultVO.buildFailure(ErrorCode.BAD_REQUEST, message));
 	}
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ResultVO<Void>> handleOthers(Exception e) {
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-			.body(ResultVO.buildFailure(ErrorCode.SERVER_ERROR, e.getMessage()));
+		return ResponseEntity.ok(ResultVO.buildFailure(ErrorCode.SERVER_ERROR, e.getMessage()));
 	}
 }

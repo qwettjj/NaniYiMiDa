@@ -7,6 +7,7 @@ import com.java.NaniYiMiDa.vo.recipe.RecipeIngredientVO;
 import com.java.NaniYiMiDa.vo.recipe.RecipeStepVO;
 import com.java.NaniYiMiDa.vo.recipe.RecipeVO;
 import com.java.NaniYiMiDa.vo.ResultVO;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.List;
@@ -83,7 +84,7 @@ public class RecipeController {
 	@GetMapping("/search")
 	public ResultVO<org.springframework.data.domain.Page<RecipeVO>> searchRecipes(
 			@RequestParam(required = false) String keyword,
-			@RequestParam(required = false) Date startDate,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
 			@RequestParam(required = false) IngredientEnum tag,
 			@org.springframework.data.web.PageableDefault(page = 0, size = 10, sort = "createTime", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable
 	) {
@@ -103,7 +104,7 @@ public class RecipeController {
 
 	@GetMapping("/getRecentRecipe")
 	public ResultVO<Page<RecipeVO>> getRecentRecipe(
-			@RequestParam(required = false) Date startDate,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
 			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
 	) {
 		return ResultVO.buildSuccess(recipeService.getRecentRecipes(startDate, pageable));
@@ -112,7 +113,7 @@ public class RecipeController {
 	@GetMapping("/recipe/{userId}")
 	public ResultVO<Page<RecipeVO>> getUserRecipe(
 			@PathVariable Long userId,
-			@RequestParam(required = false) Date startDate,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
 			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
 	) {
 		return ResultVO.buildSuccess(recipeService.getUserRecipesById(userId, startDate, pageable));

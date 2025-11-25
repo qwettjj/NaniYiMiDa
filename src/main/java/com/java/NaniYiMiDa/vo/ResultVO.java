@@ -10,21 +10,21 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class ResultVO<T> implements Serializable {
 
-	private final String code;
+	private final int code;
 
-	private final String msg;
+	private final String message;
 
-	private final T result;
+	private final T data;
 
-	public static <T> ResultVO<T> buildSuccess(T result) {
-		return new ResultVO<>("000", null, result);
+	public static <T> ResultVO<T> buildSuccess(T data) {
+		return new ResultVO<>(Integer.parseInt(ErrorCode.SUCCESS.getCode()), null, data);
 	}
 
-	public static <T> ResultVO<T> buildFailure(String msg) {
-		return new ResultVO<>("400", msg, null);
+	public static <T> ResultVO<T> buildFailure(String message) {
+		return new ResultVO<>(Integer.parseInt(ErrorCode.BAD_REQUEST.getCode()), message, null);
 	}
 
-	public static <T> ResultVO<T> buildFailure(ErrorCode errorCode, String msg) {
-		return new ResultVO<>(errorCode.getCode(), msg != null ? msg : errorCode.getDefaultMessage(), null);
+	public static <T> ResultVO<T> buildFailure(ErrorCode errorCode, String message) {
+		return new ResultVO<>(Integer.parseInt(errorCode.getCode()), message != null ? message : errorCode.getDefaultMessage(), null);
 	}
 }

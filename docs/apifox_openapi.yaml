@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: NaniYiMiDa API (Apifox)
+  version: "1.0.0"
+  description: "OpenAPI spec to import into Apifox for testing common endpoints (users, recipes, histories)."
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ResultVO:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          nullable: true
+    UserVO:
+      type: object
+      properties:
+        userId:
+          type: integer
+        userName:
+          type: string
+        phoneNumber:
+          type: string
+        password:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        followerCount:
+          type: integer
+        followingCount:
+          type: integer
+        favouriteCount:
+          type: integer
+        imageUrl:
+          type: string
+        role:
+          type: string
+    RecipeVO:
+      type: object
+      properties:
+        recipeId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+    RecipeIngredientVO:
+      type: object
+      properties:
+        ingredientId:
+          type: integer
+        ingredient:
+          type: string
+        description:
+          type: string
+    HistoryVO:
+      type: object
+      properties:
+        historyId:
+          type: integer
+        userId:
+          type: integer
+        recipeId:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+paths:
+  /api/users:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserVO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+              examples:
+                success:
+                  summary: successful register
+                  value:
+                    code: 0
+                    message: success
+                    data: true
+  /api/users/login:
+    post:
+      summary: Login (returns token)
+      parameters:
+        - in: query
+          name: phone
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: password
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+              examples:
+                success:
+                  summary: login returns token in header (body.data is null)
+                  value:
+                    code: 0
+                    message: success
+                    data: null
+  /api/users/me:
+    get:
+      summary: Get current user info
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+    put:
+      summary: Update current user info
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserVO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+  /api/users/{userId}/followings:
+    post:
+      summary: Follow user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Unfollow user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/users/me/followings:
+    get:
+      summary: List my followings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+  /api/recipes/search:
+    get:
+      summary: Search recipes (keyword and/or tag)
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: tag
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: page of RecipeVO wrapped in ResultVO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+  /api/recipes/getRecentRecipe:
+    get:
+      summary: Get recent recipes (paged)
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+  /api/recipes/recipe/{userId}:
+    get:
+      summary: Get user recipes (paged)
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+  /api/histories:
+    post:
+      summary: Add history (recipeId in path)
+      parameters:
+        - in: path
+          name: recipeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/histories/{recipeId}:
+    post:
+      summary: Add history (alternate mapping)
+      parameters:
+        - in: path
+          name: recipeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/histories/{historyId}:
+    delete:
+      summary: Delete history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: historyId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /api/histories/getCurrentUserHistory:
+    get:
+      summary: Get current user history (paged)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: startTime
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: page of HistoryVO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVO'
+
+

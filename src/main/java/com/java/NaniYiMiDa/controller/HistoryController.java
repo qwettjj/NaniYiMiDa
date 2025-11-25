@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.List;
@@ -32,7 +33,7 @@ public class HistoryController {
 
     @GetMapping("/getCurrentUserHistory")
     public ResultVO<Page<HistoryVO>> getCurrentUserHistory(
-            @RequestParam(required = false) Date startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
             @PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResultVO.buildSuccess(historyService.getCurrentUserHistory(startTime, pageable));
