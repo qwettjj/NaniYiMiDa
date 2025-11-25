@@ -38,17 +38,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean userRegister(UserVO userVO) {
-        User user = userRepository.findByPhoneNumber(userVO.getPhoneNumber());
-        if (user != null) {
+		if (userVO == null || userVO.getPhoneNumber() == null || userVO.getPhoneNumber().isBlank()) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "手机号不能为空");
+		}
+
+		User existing = userRepository.findByPhoneNumber(userVO.getPhoneNumber());
+		if (existing != null) {
 			throw new BusinessException(ErrorCode.CONFLICT, "手机号已经存在!");
-        }
-		user.setRole(Role.USER);
-        User newUser = userVO.toPO();
-        newUser.setCreateTime(new Date());
+		}
+
+		User newUser = userVO.toPO();
+		newUser.setRole(Role.USER);
+		newUser.setCreateTime(new Date());
 		if (newUser.getFollowerCount() == null) {
 			newUser.setFollowerCount(0L);
 		}
-        userRepository.save(newUser);
+		if (newUser.getFollowingCount() == null) {
+			newUser.setFollowingCount(0L);
+		}
+		if (newUser.getFavouriteCount() == null) {
+			newUser.setFavouriteCount(0L);
+		}
+
+		userRepository.save(newUser);
         return true;
     }
 
@@ -69,17 +81,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean updateUserInformation(UserVO userVO) {
+		if (userVO == null) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "更新内容不能为空");
+		}
+
 		User user = requireCurrentUser();
 		if (userVO.getPassword() != null) {
-            user.setPassword(userVO.getPassword());
-        }
-		if (userVO.getUserName() != null) {
-            user.setUserName(userVO.getUserName());
-        }
-		if (userVO.getFollowerCount() != null) {
-			user.setFollowerCount(userVO.getFollowerCount());
+			user.setPassword(userVO.getPassword());
 		}
-        userRepository.save(user);
+		if (userVO.getUserName() != null) {
+			user.setUserName(userVO.getUserName());
+		}
+		if (userVO.getImageUrl() != null) {
+			user.setImageUrl(userVO.getImageUrl());
+		}
+		// Do NOT allow clients to directly set followerCount/followingCount/favouriteCount here
+		userRepository.save(user);
         return true;
     }
 
@@ -99,11 +116,12 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.BAD_REQUEST,"已经关注了这个用户");
 		}
 
-		if(currentUser.getFollowerCount() >= 500) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"关注用户已达上限");
+		long following = currentUser.getFollowingCount() == null ? 0L : currentUser.getFollowingCount();
+		if (following >= 500) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "关注用户已达上限");
 		}
 
-		currentUser.setFollowerCount(currentUser.getFollowerCount() + 1);
+		currentUser.setFollowingCount(following + 1);
 		userRepository.save(currentUser);
 
 		findUserById(targetUserId);
@@ -117,6 +135,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Transactional
 	public Void unfollowUser(Long targetUserId) {
 		User currentUser = requireCurrentUser();
 
@@ -128,7 +147,8 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "没有关注这个用户");
 		}
 
-		currentUser.setFollowerCount(currentUser.getFollowerCount() - 1);
+		long followingCount = currentUser.getFollowingCount() == null ? 0L : currentUser.getFollowingCount();
+		currentUser.setFollowingCount(Math.max(0L, followingCount - 1));
 		userRepository.save(currentUser);
 
 		followRepository.deleteByFollowerUserIdAndFolloweeUserId(currentUser.getUserId(), targetUserId);
