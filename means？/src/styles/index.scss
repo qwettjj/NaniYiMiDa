@@ -1,0 +1,23 @@
+@use "./reset.scss" as *;
+@use "./vars.scss" as *;
+@include reset;
+//黑色主题配色
+$head-dark: #2c3e50;
+$left-background-dark: #545c64;
+$active-left-background-dark: #434a50;
+$active-text-color-dark: #ffd04b;
+$text-color-dark: #fff;
+
+$content-area-background-color-dark: #2d2d2d;
+$content-background-dark: #3d3d3d;
+$content-color-dark: #ffffff;
+
+// 浅色模式配色（优化版）
+$head-light: #ffffff;                     // 头部背景（纯白）
+$left-background-light: #f0f4f8;          // 侧边栏背景（更柔和的浅灰蓝）
+$active-text-color-light: #3a8ee6;        // 激活文字（深一点的品牌蓝）
+$active-left-background-light: #e0f0ff;   // 激活菜单背景（浅蓝，降低饱和度）
+$text-color-light: #2c3e50;               // 默认文字（深灰，接近黑色主题头部色）
+$content-area-background-color-light: #f9f9f9; // 内容区域背景（极浅灰）
+$content-background-light: #ffffff;       // 内容卡片背景（纯白）
+$content-color-light: #333333;            // 内容文字（深灰，平衡可读性）
