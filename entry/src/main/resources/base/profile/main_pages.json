@@ -5,6 +5,7 @@
     "pages/RegisterPage",
     "pages/ProfileEditPage",
     "pages/FavoritesPage",
-    "pages/FollowingPage"
+    "pages/FollowingPage",
+    "pages/RecipeDetailPage"
   ]
 }

@@ -2,7 +2,7 @@
  * 主页
  * 展示最近的食谱列表
  */
-import { promptAction } from '@kit.ArkUI';
+import { promptAction, router } from '@kit.ArkUI';
 import { RecipeService, PageResponse } from '../service/RecipeService';
 import { ResultVO } from '../service/HttpUtil';
 import { RecipeVO } from '../model/RecipeModel';
@@ -89,17 +89,18 @@ export struct HomePage {
   }
 
   /**
-   * 查看食谱详情（暂时用 Toast 提示，后端无单独详情接口）
+   * 查看食谱详情
    * @param recipeId 食谱 ID
    */
   private goToRecipeDetail(recipeId: number | null): void {
     if (recipeId === null) {
       return;
     }
-    // 后端暂无单独获取食谱详情的接口
-    promptAction.showToast({
-      message: `查看食谱 ID: ${recipeId}`,
-      duration: 1500
+    router.pushUrl({
+      url: 'pages/RecipeDetailPage',
+      params: {
+        id: recipeId
+      }
     });
   }
 

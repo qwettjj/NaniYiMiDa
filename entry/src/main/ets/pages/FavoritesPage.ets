@@ -129,7 +129,14 @@ struct FavoritesPage {
     .backgroundColor(Color.White)
     .borderRadius(12)
     .onClick(() => {
-      // 跳转详情页逻辑
+      if (recipe.recipeId) {
+        router.pushUrl({
+          url: 'pages/RecipeDetailPage',
+          params: {
+            id: recipe.recipeId
+          }
+        });
+      }
     })
   }
 
