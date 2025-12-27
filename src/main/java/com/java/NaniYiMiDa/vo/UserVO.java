@@ -25,7 +25,7 @@ public class UserVO {
 
     private Date createTime;
 
-	private Long followerCount;
+    private Long followerCount;
 
     private Long followingCount;
 
@@ -35,18 +35,30 @@ public class UserVO {
 
     private Role role;
 
-    public User toPO(){
+    private String nickName;
+
+    private String signature;
+
+    private String birthday;
+
+    private String allergens;
+
+    public User toPO() {
         User user = new User();
         user.setUserId(userId);
         user.setUserName(userName);
         user.setPassword(password);
         user.setPhoneNumber(phoneNumber);
         user.setCreateTime(createTime);
-		user.setFollowerCount(followerCount);
+        user.setFollowerCount(followerCount);
         user.setFollowingCount(followingCount);
         user.setFavouriteCount(favouriteCount);
         user.setImageUrl(imageUrl);
         user.setRole(role);
+        user.setNickName(nickName);
+        user.setSignature(signature);
+        user.setBirthday(birthday);
+        user.setAllergens(allergens);
         return user;
     }
 }

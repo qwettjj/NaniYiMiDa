@@ -11,6 +11,7 @@ import com.java.NaniYiMiDa.service.UserService;
 import com.java.NaniYiMiDa.tool.SecurityUtil;
 import com.java.NaniYiMiDa.tool.TokenUtil;
 import com.java.NaniYiMiDa.vo.UserVO;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.lang.NonNull;
@@ -23,21 +24,23 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    UserRepository userRepository;
+	@Autowired
+	UserRepository userRepository;
 
-    @Autowired
-    TokenUtil tokenUtil;
+	@Autowired
+	TokenUtil tokenUtil;
 
-    @Autowired
-    SecurityUtil securityUtil;
+	@Autowired
+	SecurityUtil securityUtil;
 
 	@Autowired
 	FollowRepository followRepository;
 
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
-    @Override
-    public Boolean userRegister(UserVO userVO) {
+	@Override
+	public Boolean userRegister(UserVO userVO) {
 		if (userVO == null || userVO.getPhoneNumber() == null || userVO.getPhoneNumber().isBlank()) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "手机号不能为空");
 		}
@@ -61,26 +64,26 @@ public class UserServiceImpl implements UserService {
 		}
 
 		userRepository.save(newUser);
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public String userLogin(String phone, String password) {
-        User user = userRepository.findByPhoneNumberAndPassword(phone, password);
-        if (user == null) {
+	@Override
+	public String userLogin(String phone, String password) {
+		User user = userRepository.findByPhoneNumberAndPassword(phone, password);
+		if (user == null) {
 			throw new BusinessException(ErrorCode.UNAUTHORIZED, "手机号或者密码有误");
-        }
-        return tokenUtil.getToken(user);
-    }
+		}
+		return tokenUtil.getToken(user);
+	}
 
-    @Override
-    public UserVO getCurrentUserInformation() {
+	@Override
+	public UserVO getCurrentUserInformation() {
 		User user = requireCurrentUser();
-        return user.toVO();
-    }
+		return user.toVO();
+	}
 
-    @Override
-    public Boolean updateUserInformation(UserVO userVO) {
+	@Override
+	public Boolean updateUserInformation(UserVO userVO) {
 		if (userVO == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "更新内容不能为空");
 		}
@@ -95,10 +98,27 @@ public class UserServiceImpl implements UserService {
 		if (userVO.getImageUrl() != null) {
 			user.setImageUrl(userVO.getImageUrl());
 		}
-		// Do NOT allow clients to directly set followerCount/followingCount/favouriteCount here
+		if (userVO.getNickName() != null) {
+			user.setNickName(userVO.getNickName());
+		}
+		if (userVO.getSignature() != null) {
+			user.setSignature(userVO.getSignature());
+		}
+		if (userVO.getBirthday() != null) {
+			user.setBirthday(userVO.getBirthday());
+		}
+		if (userVO.getAllergens() != null) {
+			user.setAllergens(userVO.getAllergens());
+		}
+		// Do NOT allow clients to directly set
+		// followerCount/followingCount/favouriteCount here
 		userRepository.save(user);
-        return true;
-    }
+
+		// 重要：更新 Session 中的用户信息，否则后续请求获取到的仍是旧数据
+		httpServletRequest.getSession().setAttribute("currentUser", user);
+
+		return true;
+	}
 
 	@Override
 	@Transactional
@@ -113,7 +133,7 @@ public class UserServiceImpl implements UserService {
 		}
 
 		if (followRepository.existsByFollowerUserIdAndFolloweeUserId(currentUser.getUserId(), targetUserId)) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"已经关注了这个用户");
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "已经关注了这个用户");
 		}
 
 		long following = currentUser.getFollowingCount() == null ? 0L : currentUser.getFollowingCount();
@@ -160,8 +180,8 @@ public class UserServiceImpl implements UserService {
 	public List<UserVO> listMyFollowings() {
 		User currentUser = requireCurrentUser();
 		return followRepository.findByFollowerUserId(currentUser.getUserId()).stream()
-			.map(f -> findUserById(f.getFolloweeUserId()).toVO())
-			.collect(Collectors.toList());
+				.map(f -> findUserById(f.getFolloweeUserId()).toVO())
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -199,7 +219,7 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "用户ID不能为空");
 		}
 		return userRepository.findById(userId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
+				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
 	}
 
 	@NonNull
@@ -211,4 +231,3 @@ public class UserServiceImpl implements UserService {
 		return user;
 	}
 }
-

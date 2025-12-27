@@ -53,8 +53,8 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Long createRecipeDraft(String title){
-		if(title == null || title.isBlank()){
+	public Long createRecipeDraft(String title) {
+		if (title == null || title.isBlank()) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "食谱标题不能为空");
 		}
 		Recipe recipe = new Recipe();
@@ -69,13 +69,13 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Void modifyRecipeTitle(Long recipeId, String title){
-		if(title == null || title.isBlank()){
+	public Void modifyRecipeTitle(Long recipeId, String title) {
+		if (title == null || title.isBlank()) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "食谱标题不能为空");
 		}
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		recipe.setTitle(title);
 		recipeRepository.save(recipe);
@@ -84,10 +84,10 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Void modifyRecipeDescription(Long recipeId, String description){
+	public Void modifyRecipeDescription(Long recipeId, String description) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		recipe.setDescription(description);
 		recipeRepository.save(recipe);
@@ -96,13 +96,13 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Void publishRecipeDraft(Long recipeId){
+	public Void publishRecipeDraft(Long recipeId) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
-		if(recipe.getStatus() == RecipeStatus.PUBLISHED){
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"已经发布了这篇食谱");
+		if (recipe.getStatus() == RecipeStatus.PUBLISHED) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "已经发布了这篇食谱");
 		}
 		recipe.setStatus(RecipeStatus.PUBLISHED);
 		recipeRepository.save(recipe);
@@ -111,10 +111,10 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Void deleteRecipe(Long recipeId){
+	public Void deleteRecipe(Long recipeId) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe) && requireCurrentUser().getRole() != Role.ADMIN){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe) && requireCurrentUser().getRole() != Role.ADMIN) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		recipeRepository.delete(recipe);
 		return null;
@@ -122,10 +122,10 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public Void hideRecipe(Long recipeId){
+	public Void hideRecipe(Long recipeId) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		recipe.setStatus(RecipeStatus.HIDDEN);
 		recipeRepository.save(recipe);
@@ -136,12 +136,13 @@ public class RecipeServiceImpl implements RecipeService {
 	@Transactional
 	public RecipeVO addRecipeStep(Long recipeId, Integer index, RecipeStepVO stepVO) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		RecipeStep newStep = buildStepForCreate(stepVO);
 		List<RecipeStep> orderedSteps = getOrderedSteps(recipe);
-		int insertIndex = resolveInsertIndex(index, stepVO != null ? stepVO.getStepNumber() : null, orderedSteps.size()); // NOTE: index 优先决定插入位置
+		int insertIndex = resolveInsertIndex(index, stepVO != null ? stepVO.getStepNumber() : null,
+				orderedSteps.size()); // NOTE: index 优先决定插入位置
 		orderedSteps.add(insertIndex, newStep);
 		reindexSteps(orderedSteps);
 		recipe.setSteps(orderedSteps);
@@ -153,17 +154,17 @@ public class RecipeServiceImpl implements RecipeService {
 	@Transactional
 	public RecipeVO modifyRecipeStep(Long recipeId, Long stepId, RecipeStepVO stepVO) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		if (stepId == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "步骤ID不能为空");
 		}
 		List<RecipeStep> orderedSteps = getOrderedSteps(recipe);
 		RecipeStep targetStep = orderedSteps.stream()
-			.filter(step -> Objects.equals(step.getId(), stepId))
-			.findFirst()
-			.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "步骤不存在"));
+				.filter(step -> Objects.equals(step.getId(), stepId))
+				.findFirst()
+				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "步骤不存在"));
 		if (stepVO != null) {
 			if (stepVO.getDescription() != null) {
 				targetStep.setDescription(stepVO.getDescription());
@@ -186,8 +187,8 @@ public class RecipeServiceImpl implements RecipeService {
 	@Transactional
 	public RecipeVO deleteRecipeStep(Long recipeId, Long stepId) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		if (stepId == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "步骤ID不能为空");
@@ -207,8 +208,8 @@ public class RecipeServiceImpl implements RecipeService {
 	@Transactional
 	public RecipeVO swapRecipeSteps(Long recipeId, Integer firstIndex, Integer secondIndex) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
 		if (firstIndex == null || secondIndex == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "索引不能为空");
@@ -229,17 +230,17 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public RecipeIngredientVO modifyRecipeIngredient(Long recipeId, String description){
+	public RecipeIngredientVO modifyRecipeIngredient(Long recipeId, String description) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
-		if(description == null || description.isBlank()){
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"食材描述不能为空");
+		if (description == null || description.isBlank()) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "食材描述不能为空");
 		}
 		IngredientEnum ingredientEnum = ingredientResolver.resolve(description);
 		RecipeIngredient recipeIngredient = recipeIngredientRepository.findByRecipe_RecipeId(recipeId)
-			.orElse(new RecipeIngredient());
+				.orElse(new RecipeIngredient());
 		recipeIngredient.setRecipe(recipe);
 		recipeIngredient.setIngredient(ingredientEnum);
 		recipeIngredient.setDescription(description);
@@ -249,16 +250,16 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Override
 	@Transactional
-	public RecipeIngredientVO setRecipeIngredientTag(Long recipeId, IngredientEnum ingredient){
+	public RecipeIngredientVO setRecipeIngredientTag(Long recipeId, IngredientEnum ingredient) {
 		Recipe recipe = findRecipeById(recipeId);
-		if(!judgeRecipeCreator(recipe)){
-			throw new BusinessException(ErrorCode.FORBIDDEN,"不能操作其他人的食谱");
+		if (!judgeRecipeCreator(recipe)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN, "不能操作其他人的食谱");
 		}
-		if(ingredient == null){
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"食材类型不能为空");
+		if (ingredient == null) {
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "食材类型不能为空");
 		}
 		RecipeIngredient recipeIngredient = recipeIngredientRepository.findByRecipe_RecipeId(recipeId)
-			.orElse(new RecipeIngredient());
+				.orElse(new RecipeIngredient());
 		recipeIngredient.setRecipe(recipe);
 		recipeIngredient.setIngredient(ingredient);
 		recipeIngredientRepository.save(recipeIngredient);
@@ -266,7 +267,8 @@ public class RecipeServiceImpl implements RecipeService {
 	}
 
 	@Override
-	public org.springframework.data.domain.Page<RecipeVO> searchRecipes(String keyword, Date startDate, com.java.NaniYiMiDa.enumx.IngredientEnum tag, org.springframework.data.domain.Pageable pageable) {
+	public org.springframework.data.domain.Page<RecipeVO> searchRecipes(String keyword, Date startDate,
+			com.java.NaniYiMiDa.enumx.IngredientEnum tag, org.springframework.data.domain.Pageable pageable) {
 		boolean isKeywordPresent = keyword != null && !keyword.isBlank();
 		boolean isTagPresent = tag != null;
 
@@ -276,18 +278,22 @@ public class RecipeServiceImpl implements RecipeService {
 
 		Page<Recipe> page;
 		if (isTagPresent && isKeywordPresent) {
-			page = recipeRepository.searchByStatusAndStartDateAndKeywordAndIngredient(RecipeStatus.PUBLISHED, startDate, keyword.trim(), tag, pageable);
+			page = recipeRepository.searchByStatusAndStartDateAndKeywordAndIngredient(RecipeStatus.PUBLISHED, startDate,
+					keyword.trim(), tag, pageable);
 		} else if (isTagPresent) {
-			page = recipeRepository.searchByStatusAndStartDateAndIngredient(RecipeStatus.PUBLISHED, startDate, tag, pageable);
+			page = recipeRepository.searchByStatusAndStartDateAndIngredient(RecipeStatus.PUBLISHED, startDate, tag,
+					pageable);
 		} else {
-			page = recipeRepository.searchByStatusAndStartDateAndKeyword(RecipeStatus.PUBLISHED, startDate, keyword.trim(), pageable);
+			page = recipeRepository.searchByStatusAndStartDateAndKeyword(RecipeStatus.PUBLISHED, startDate,
+					keyword.trim(), pageable);
 		}
 
 		return page.map(Recipe::toVO);
 	}
 
 	@Override
-	public org.springframework.data.domain.Page<RecipeVO> getRecentRecipes(Date startDate, org.springframework.data.domain.Pageable pageable) {
+	public org.springframework.data.domain.Page<RecipeVO> getRecentRecipes(Date startDate,
+			org.springframework.data.domain.Pageable pageable) {
 		Page<Recipe> recipePage;
 		if (startDate == null) {
 			recipePage = recipeRepository.findByStatus(RecipeStatus.PUBLISHED, pageable);
@@ -299,9 +305,10 @@ public class RecipeServiceImpl implements RecipeService {
 	}
 
 	@Override
-	public org.springframework.data.domain.Page<RecipeVO> getUserRecipesById(Long userId, Date startDate, org.springframework.data.domain.Pageable pageable) {
+	public org.springframework.data.domain.Page<RecipeVO> getUserRecipesById(Long userId, Date startDate,
+			org.springframework.data.domain.Pageable pageable) {
 		if (userId == null) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST,"用户ID不能为空");
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "用户ID不能为空");
 		}
 
 		Long currentUserId = requireCurrentUser().getUserId();
@@ -312,22 +319,18 @@ public class RecipeServiceImpl implements RecipeService {
 		if (isCurrentUser) {
 			if (startDate == null) {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusNot(
-						userId, RecipeStatus.DRAFT, pageable
-				);
+						userId, RecipeStatus.DRAFT, pageable);
 			} else {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusNotAndCreateTimeAfter(
-						userId, RecipeStatus.DRAFT, startDate, pageable
-				);
+						userId, RecipeStatus.DRAFT, startDate, pageable);
 			}
 		} else {
 			if (startDate == null) {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatus(
-						userId, RecipeStatus.PUBLISHED, pageable
-				);
+						userId, RecipeStatus.PUBLISHED, pageable);
 			} else {
 				recipePage = recipeRepository.findByCreatorUserIdAndStatusAndCreateTimeAfter(
-						userId, RecipeStatus.PUBLISHED, startDate, pageable
-				);
+						userId, RecipeStatus.PUBLISHED, startDate, pageable);
 			}
 		}
 
@@ -351,6 +354,19 @@ public class RecipeServiceImpl implements RecipeService {
 		return draftRecipes;
 	}
 
+	@Override
+	public RecipeVO getRecipeById(Long recipeId) {
+		Recipe recipe = findRecipeById(recipeId);
+		// 只有已发布的食谱或者作者本人可以查看
+		if (recipe.getStatus() != RecipeStatus.PUBLISHED) {
+			User currentUser = securityUtil.getCurrentUser();
+			if (currentUser == null || !recipe.getCreatorUserId().equals(currentUser.getUserId())) {
+				throw new BusinessException(ErrorCode.FORBIDDEN, "无权查看该食谱");
+			}
+		}
+		return recipe.toVO();
+	}
+
 	private RecipeStep buildStepForCreate(RecipeStepVO stepVO) {
 		if (stepVO == null || stepVO.getDescription() == null || stepVO.getDescription().isBlank()) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "步骤内容不能为空");
@@ -367,8 +383,8 @@ public class RecipeServiceImpl implements RecipeService {
 		List<RecipeStep> raw = recipe.getSteps();
 		List<RecipeStep> steps = raw == null ? new ArrayList<>() : new ArrayList<>(raw);
 		steps.sort(Comparator
-			.comparing((RecipeStep s) -> s.getStepNumber() == null ? Integer.MAX_VALUE : s.getStepNumber())
-			.thenComparing(s -> s.getId() == null ? Long.MAX_VALUE : s.getId()));
+				.comparing((RecipeStep s) -> s.getStepNumber() == null ? Integer.MAX_VALUE : s.getStepNumber())
+				.thenComparing(s -> s.getId() == null ? Long.MAX_VALUE : s.getId()));
 		return steps;
 	}
 
@@ -413,7 +429,6 @@ public class RecipeServiceImpl implements RecipeService {
 		}
 	}
 
-
 	private Recipe findRecipeById(Long recipeId) {
 		if (recipeId == null) {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "食谱ID不能为空");
@@ -431,8 +446,7 @@ public class RecipeServiceImpl implements RecipeService {
 		return user;
 	}
 
-	private Boolean judgeRecipeCreator(Recipe recipe){
+	private Boolean judgeRecipeCreator(Recipe recipe) {
 		return Objects.equals(recipe.getCreatorUserId(), requireCurrentUser().getUserId());
 	}
 }
-

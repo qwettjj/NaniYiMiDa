@@ -57,15 +57,15 @@ public class RecipeController {
 
 	@PostMapping("/{recipeId}/steps")
 	public ResultVO<RecipeVO> addRecipeStep(@PathVariable Long recipeId,
-											@RequestParam(value = "index", required = false) Integer index,
-											@RequestBody RecipeStepVO stepVO) {
+			@RequestParam(value = "index", required = false) Integer index,
+			@RequestBody RecipeStepVO stepVO) {
 		return ResultVO.buildSuccess(recipeService.addRecipeStep(recipeId, index, stepVO));
 	}
 
 	@PutMapping("/{recipeId}/steps/{stepId}")
 	public ResultVO<RecipeVO> modifyRecipeStep(@PathVariable Long recipeId,
-											   @PathVariable Long stepId,
-											   @RequestBody RecipeStepVO stepVO) {
+			@PathVariable Long stepId,
+			@RequestBody RecipeStepVO stepVO) {
 		return ResultVO.buildSuccess(recipeService.modifyRecipeStep(recipeId, stepId, stepVO));
 	}
 
@@ -76,8 +76,8 @@ public class RecipeController {
 
 	@PostMapping("/{recipeId}/steps/swap")
 	public ResultVO<RecipeVO> swapRecipeSteps(@PathVariable Long recipeId,
-											  @RequestParam("firstIndex") Integer firstIndex,
-											  @RequestParam("secondIndex") Integer secondIndex) {
+			@RequestParam("firstIndex") Integer firstIndex,
+			@RequestParam("secondIndex") Integer secondIndex) {
 		return ResultVO.buildSuccess(recipeService.swapRecipeSteps(recipeId, firstIndex, secondIndex));
 	}
 
@@ -86,27 +86,26 @@ public class RecipeController {
 			@RequestParam(required = false) String keyword,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
 			@RequestParam(required = false) IngredientEnum tag,
-			@org.springframework.data.web.PageableDefault(page = 0, size = 10, sort = "createTime", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable
-	) {
+			@org.springframework.data.web.PageableDefault(page = 0, size = 10, sort = "createTime", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
 		return ResultVO.buildSuccess(recipeService.searchRecipes(keyword, startDate, tag, pageable));
 	}
 
 	@PutMapping("/{recipeId}/ingredient/description")
-	public ResultVO<RecipeIngredientVO> modifyRecipeIngredient(@PathVariable Long recipeId, @RequestBody String description) {
+	public ResultVO<RecipeIngredientVO> modifyRecipeIngredient(@PathVariable Long recipeId,
+			@RequestBody String description) {
 		return ResultVO.buildSuccess(recipeService.modifyRecipeIngredient(recipeId, description));
 	}
 
 	@PutMapping("/{recipeId}/ingredient/tag")
 	public ResultVO<RecipeIngredientVO> setRecipeIngredientTag(@PathVariable Long recipeId,
-												   @RequestParam IngredientEnum ingredient) {
+			@RequestParam IngredientEnum ingredient) {
 		return ResultVO.buildSuccess(recipeService.setRecipeIngredientTag(recipeId, ingredient));
 	}
 
 	@GetMapping("/getRecentRecipe")
 	public ResultVO<Page<RecipeVO>> getRecentRecipe(
 			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
-			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
-	) {
+			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable) {
 		return ResultVO.buildSuccess(recipeService.getRecentRecipes(startDate, pageable));
 	}
 
@@ -114,8 +113,7 @@ public class RecipeController {
 	public ResultVO<Page<RecipeVO>> getUserRecipe(
 			@PathVariable Long userId,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
-			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable
-	) {
+			@PageableDefault(page = 0, size = 10, sort = "createTime", direction = Sort.Direction.DESC) Pageable pageable) {
 		return ResultVO.buildSuccess(recipeService.getUserRecipesById(userId, startDate, pageable));
 	}
 
@@ -123,5 +121,9 @@ public class RecipeController {
 	public ResultVO<List<RecipeVO>> getCurrentUserDraft() {
 		return ResultVO.buildSuccess(recipeService.getCurrentUserDraft());
 	}
-}
 
+	@GetMapping("/{recipeId}")
+	public ResultVO<RecipeVO> getRecipeById(@PathVariable Long recipeId) {
+		return ResultVO.buildSuccess(recipeService.getRecipeById(recipeId));
+	}
+}

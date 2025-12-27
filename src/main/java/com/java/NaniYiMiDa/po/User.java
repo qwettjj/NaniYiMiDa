@@ -1,6 +1,5 @@
 package com.java.NaniYiMiDa.po;
 
-
 import com.java.NaniYiMiDa.enumx.Role;
 import com.java.NaniYiMiDa.vo.UserVO;
 import jakarta.persistence.*;
@@ -39,9 +38,9 @@ public class User {
     @Column(name = "create_time")
     private Date createTime;
 
-	@Basic
-	@Column(name = "follower_count")
-	private Long followerCount;
+    @Basic
+    @Column(name = "follower_count")
+    private Long followerCount;
 
     @Basic
     @Column(name = "following_count")
@@ -59,18 +58,38 @@ public class User {
     @Column(name = "role")
     private Role role;
 
-    public UserVO toVO(){
+    @Basic
+    @Column(name = "nick_name")
+    private String nickName;
+
+    @Basic
+    @Column(name = "signature")
+    private String signature;
+
+    @Basic
+    @Column(name = "birthday")
+    private String birthday;
+
+    @Basic
+    @Column(name = "allergens")
+    private String allergens;
+
+    public UserVO toVO() {
         UserVO userVO = new UserVO();
         userVO.setUserId(userId);
         userVO.setUserName(userName);
         userVO.setPassword(password);
         userVO.setPhoneNumber(phoneNumber);
         userVO.setCreateTime(createTime);
-		userVO.setFollowerCount(followerCount);
+        userVO.setFollowerCount(followerCount);
         userVO.setFollowingCount(followingCount);
         userVO.setFavouriteCount(favouriteCount);
         userVO.setImageUrl(imageUrl);
         userVO.setRole(role);
+        userVO.setNickName(nickName);
+        userVO.setSignature(signature);
+        userVO.setBirthday(birthday);
+        userVO.setAllergens(allergens);
 
         return userVO;
     }
