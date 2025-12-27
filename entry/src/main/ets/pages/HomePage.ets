@@ -277,6 +277,13 @@ export struct HomePage {
           .fontColor('#333333')
 
         Blank()
+
+        Button('发布')
+          .fontSize(14)
+          .height(32)
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/RecipePublishPage' });
+          })
       }
       .width('100%')
       .height(56)
