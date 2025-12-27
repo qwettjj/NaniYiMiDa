@@ -55,35 +55,44 @@ struct RecipePublishPage {
 
     try {
       // 1. 创建草稿
+      console.info('Publish: 1. Creating draft...');
       const createRes = await RecipeService.createRecipeDraft(this.title);
+      console.info('Publish: Draft result:', JSON.stringify(createRes));
       if (createRes.code !== 0 || !createRes.data) {
         throw new Error(createRes.message || '创建草稿失败');
       }
       this.recipeId = createRes.data;
 
       // 2. 更新描述
-      await RecipeService.modifyRecipeDescription(this.recipeId, this.description);
+      console.info('Publish: 2. Updating description...');
+      const descRes = await RecipeService.modifyRecipeDescription(this.recipeId, this.description);
+      if (descRes.code !== 0) throw new Error(descRes.message || '更新描述失败');
 
       // 3. 更新食材
       if (this.ingredients.trim()) {
-        await RecipeService.modifyRecipeIngredient(this.recipeId, this.ingredients);
+        console.info('Publish: 3. Updating ingredients...');
+        const ingRes = await RecipeService.modifyRecipeIngredient(this.recipeId, this.ingredients);
+        if (ingRes.code !== 0) throw new Error(ingRes.message || '更新食材失败');
       }
 
       // 4. 添加步骤
+      console.info('Publish: 4. Adding steps...');
       for (let i = 0; i < this.steps.length; i++) {
         const step = this.steps[i];
         const desc = step.description || '';
         if (desc.trim()) {
-          await RecipeService.addRecipeStep(this.recipeId, {
+          const stepRes = await RecipeService.addRecipeStep(this.recipeId, {
             stepId: null,
             stepNumber: i + 1,
             description: desc,
             imageUrls: [] // 暂不支持图片上传
           });
+          if (stepRes.code !== 0) throw new Error(stepRes.message || `添加步骤 ${i + 1} 失败`);
         }
       }
 
       // 5. 发布
+      console.info('Publish: 5. Publishing...');
       const publishRes = await RecipeService.publishRecipe(this.recipeId);
       if (publishRes.code === 0) {
         promptAction.showToast({ message: '发布成功！' });
@@ -95,8 +104,14 @@ struct RecipePublishPage {
       }
 
     } catch (e) {
-      console.error('Publish Error:', JSON.stringify(e));
-      promptAction.showToast({ message: e.message || '发布过程中出现错误' });
+      let message = '发布过程中出现错误';
+      if (e instanceof Error) {
+        console.error('Publish Error Message:', e.message);
+        message = e.message;
+      } else {
+        console.error('Publish Error:', JSON.stringify(e));
+      }
+      promptAction.showToast({ message: message });
     } finally {
       this.isSubmitting = false;
     }

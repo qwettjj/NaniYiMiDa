@@ -149,7 +149,7 @@ struct RegisterPage {
             duration: 2000
           });
         } catch (e) {
-          console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+          console.warn('RegisterPage: Toast 显示失败', e instanceof Error ? e.message : JSON.stringify(e));
         }
 
         // 延迟跳转到登录页
@@ -168,7 +168,7 @@ struct RegisterPage {
             duration: 2000
           });
         } catch (e) {
-          console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+          console.warn('RegisterPage: Toast 显示失败', e instanceof Error ? e.message : JSON.stringify(e));
         }
       }
     } catch (error) {
@@ -183,7 +183,7 @@ struct RegisterPage {
           duration: 2000
         });
       } catch (e) {
-        console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+        console.warn('RegisterPage: Toast 显示失败', e instanceof Error ? e.message : JSON.stringify(e));
       }
     } finally {
       this.isLoading = false;

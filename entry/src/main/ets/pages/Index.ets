@@ -31,12 +31,12 @@ struct Index {
       TabContent() {
         HomePage()
       }
-      .tabBar(this.TabBuilder('首页', 0, $r('app.media.startIcon'), $r('app.media.startIcon'))) // Replace with actual icons
+      .tabBar(this.TabBuilder('首页', 0, $r('app.media.startIcon'), $r('app.media.startIcon')))
 
       TabContent() {
         ProfilePage()
       }
-      .tabBar(this.TabBuilder('我的', 1, $r('app.media.startIcon'), $r('app.media.startIcon'))) // Replace with actual icons
+      .tabBar(this.TabBuilder('我的', 1, $r('app.media.startIcon'), $r('app.media.startIcon')))
     }
     .onChange((index: number) => {
       this.currentIndex = index;

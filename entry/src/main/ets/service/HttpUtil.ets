@@ -89,7 +89,7 @@ export class HttpUtil {
       const token = await pref.get(TOKEN_KEY, '') as string;
       return token;
     } catch (e) {
-      console.error('HttpUtil: 获取Token失败 -', JSON.stringify(e));
+      console.error('HttpUtil: 获取Token失败 -', e instanceof Error ? e.message : JSON.stringify(e));
       return '';
     }
   }
@@ -110,7 +110,7 @@ export class HttpUtil {
       await pref.flush();
       console.info('HttpUtil: Token 保存成功');
     } catch (e) {
-      console.error('HttpUtil: 保存Token失败 -', JSON.stringify(e));
+      console.error('HttpUtil: 保存Token失败 -', e instanceof Error ? e.message : JSON.stringify(e));
     }
   }
 
@@ -128,7 +128,7 @@ export class HttpUtil {
       await pref.flush();
       console.info('HttpUtil: Token 已清除');
     } catch (e) {
-      console.error('HttpUtil: 清除Token失败 -', JSON.stringify(e));
+      console.error('HttpUtil: 清除Token失败 -', e instanceof Error ? e.message : JSON.stringify(e));
     }
   }
 
@@ -212,7 +212,13 @@ export class HttpUtil {
         };
       }
     } catch (e) {
-      console.error(`HttpUtil: 请求异常 ${url} -`, JSON.stringify(e));
+      let msg = 'Unknown error';
+      if (e instanceof Error) {
+        msg = e.message;
+      } else {
+        msg = JSON.stringify(e);
+      }
+      console.error(`HttpUtil: 请求异常 ${url} -`, msg);
       return {
         code: 500,
         message: '网络请求异常，请检查网络连接',

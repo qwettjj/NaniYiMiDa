@@ -6,7 +6,7 @@ import { HttpUtil } from '../service/HttpUtil';
 
 @Entry
 @Component
-struct FavoritesPage {
+export struct FavoritesPage {
   @State favoriteRecipes: RecipeVO[] = [];
   @State isLoading: boolean = false;
 
@@ -37,7 +37,13 @@ struct FavoritesPage {
         this.getUIContext().getPromptAction().showToast({ message: favResult.message || '获取收藏失败' });
       }
     } catch (e) {
-      console.error('FavoritesPage: 加载失败', JSON.stringify(e));
+      let msg = 'Unknown error';
+      if (e instanceof Error) {
+        msg = e.message;
+      } else {
+        msg = JSON.stringify(e);
+      }
+      console.error('FavoritesPage: 加载失败', msg);
     } finally {
       this.isLoading = false;
     }

@@ -82,7 +82,10 @@ export enum IngredientEnum {
   SALT = 'SALT',
   SOY_SAUCE = 'SOY_SAUCE',
   VINEGAR = 'VINEGAR',
-  COOKING_WINE = 'COOKING_WINE'
+  COOKING_WINE = 'COOKING_WINE',
+  
+  // 其他
+  OTHER = 'OTHER'
 }
 
 /**
@@ -272,7 +275,8 @@ export function getIngredientDisplayName(ingredient: IngredientEnum): string {
     [IngredientEnum.SALT]: '食盐',
     [IngredientEnum.SOY_SAUCE]: '酱油',
     [IngredientEnum.VINEGAR]: '醋',
-    [IngredientEnum.COOKING_WINE]: '料酒'
+    [IngredientEnum.COOKING_WINE]: '料酒',
+    [IngredientEnum.OTHER]: '其他'
   };
   return displayNames[ingredient] || ingredient;
 }

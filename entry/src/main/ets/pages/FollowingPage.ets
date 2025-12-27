@@ -24,7 +24,7 @@ struct FollowingPage {
         this.getUIContext().getPromptAction().showToast({ message: result.message || '获取关注列表失败' });
       }
     } catch (e) {
-      console.error('FollowingPage: 加载失败', JSON.stringify(e));
+      console.error('FollowingPage: 加载失败', e instanceof Error ? e.message : JSON.stringify(e));
     } finally {
       this.isLoading = false;
     }

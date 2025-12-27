@@ -34,7 +34,7 @@ struct RecipeDetailPage {
         promptAction.showToast({ message: result.message || '获取详情失败' });
       }
     } catch (e) {
-      console.error('RecipeDetail: 加载失败', JSON.stringify(e));
+      console.error('RecipeDetail: 加载失败', e instanceof Error ? e.message : JSON.stringify(e));
       promptAction.showToast({ message: '网络异常' });
     } finally {
       this.isLoading = false;

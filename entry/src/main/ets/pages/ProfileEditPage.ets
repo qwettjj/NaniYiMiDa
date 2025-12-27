@@ -99,7 +99,7 @@ struct ProfileEditPage {
         this.getUIContext().getPromptAction().showToast({ message: '获取用户信息失败' });
       }
     } catch (e) {
-      console.error('ProfileEditPage: 加载失败', JSON.stringify(e));
+      console.error('ProfileEditPage: 加载失败', e instanceof Error ? e.message : JSON.stringify(e));
     } finally {
       this.isLoading = false;
     }
