@@ -62,6 +62,7 @@ public class RecipeServiceImpl implements RecipeService {
 		recipe.setStatus(RecipeStatus.DRAFT);
 		recipe.setCreateTime(new Date());
 		recipe.setStepCount(0);
+		recipe.setFavouriteNumber(0);
 		recipe.setCreatorUserId(requireCurrentUser().getUserId());
 		recipeRepository.save(recipe);
 		return recipe.getRecipeId();
@@ -239,6 +240,9 @@ public class RecipeServiceImpl implements RecipeService {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "食材描述不能为空");
 		}
 		IngredientEnum ingredientEnum = ingredientResolver.resolve(description);
+		if (ingredientEnum == null) {
+			ingredientEnum = IngredientEnum.OTHER;
+		}
 		RecipeIngredient recipeIngredient = recipeIngredientRepository.findByRecipe_RecipeId(recipeId)
 				.orElse(new RecipeIngredient());
 		recipeIngredient.setRecipe(recipe);

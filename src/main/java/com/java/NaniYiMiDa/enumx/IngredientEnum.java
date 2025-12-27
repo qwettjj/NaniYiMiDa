@@ -100,7 +100,8 @@ public enum IngredientEnum {
 	FIVE_SPICE("五香粉"),
 	BASIL("罗勒"),
 	ROSEMARY("迷迭香"),
-	THYME("百里香");
+	THYME("百里香"),
+	OTHER("其他", "Other");
 
 	@Getter
 	private final String displayName;
