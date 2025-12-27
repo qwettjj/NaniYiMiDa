@@ -309,4 +309,14 @@ export class RecipeService {
       `${BASE_PATH}/${recipeId}/ingredient/tag?ingredient=${ingredient}`
     );
   }
+
+  /**
+   * 根据 ID 获取食谱详情
+   * GET /api/recipes/{recipeId}
+   * @param recipeId 食谱 ID
+   * @returns 食谱详情
+   */
+  static async getRecipeById(recipeId: number): Promise<ResultVO<RecipeVO>> {
+    return await HttpUtil.get<RecipeVO>(`${BASE_PATH}/${recipeId}`);
+  }
 }

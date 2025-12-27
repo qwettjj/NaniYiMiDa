@@ -6,7 +6,11 @@ import http from '@ohos.net.http';
 import { preferences } from '@kit.ArkData';
 
 /** API 基础地址 */
-const BASE_URL: string = 'http://10.0.2.2:8080';
+// 自动检测到的本机局域网 IP，适用于真机和模拟器
+const BASE_URL: string = 'http://10.52.19.170:8080';
+// 备用：如果是 Android 模拟器，可以使用 http://10.0.2.2:8080
+// 备用：如果是本地 Previewer，可以使用 http://127.0.0.1:8080
+// const BASE_URL: string = 'http://10.0.2.2:8080';
 
 /** Token 存储键名 */
 const TOKEN_KEY: string = 'user_token';
@@ -58,6 +62,7 @@ export class HttpUtil {
    */
   static init(context: Context): void {
     HttpUtil.context = context;
+    console.info('HttpUtil: Context 初始化成功');
   }
 
   /**
@@ -65,12 +70,22 @@ export class HttpUtil {
    * @returns Token 字符串，未登录时返回空字符串
    */
   static async getToken(): Promise<string> {
-    if (!HttpUtil.context) {
-      console.error('HttpUtil: Context 未初始化');
+    let ctx = HttpUtil.context;
+    if (!ctx) {
+      try {
+        // 尝试动态获取上下文
+        ctx = getContext();
+      } catch (e) {
+        console.warn('HttpUtil: 动态获取 Context 失败');
+      }
+    }
+
+    if (!ctx) {
+      console.warn('HttpUtil: Context 缺失，跳过 Token 读取');
       return '';
     }
     try {
-      const pref = await preferences.getPreferences(HttpUtil.context, PREFERENCES_NAME);
+      const pref = await preferences.getPreferences(ctx, PREFERENCES_NAME);
       const token = await pref.get(TOKEN_KEY, '') as string;
       return token;
     } catch (e) {
@@ -84,12 +99,13 @@ export class HttpUtil {
    * @param token 要保存的 Token
    */
   static async saveToken(token: string): Promise<void> {
-    if (!HttpUtil.context) {
-      console.error('HttpUtil: Context 未初始化');
+    let ctx = HttpUtil.context || getContext();
+    if (!ctx) {
+      console.error('HttpUtil: 无法保存 Token，Context 缺失');
       return;
     }
     try {
-      const pref = await preferences.getPreferences(HttpUtil.context, PREFERENCES_NAME);
+      const pref = await preferences.getPreferences(ctx, PREFERENCES_NAME);
       await pref.put(TOKEN_KEY, token);
       await pref.flush();
       console.info('HttpUtil: Token 保存成功');
@@ -173,10 +189,21 @@ export class HttpUtil {
       });
 
       console.info(`HttpUtil: ${config.method} ${url} -> ${response.responseCode}`);
+      console.info(`HttpUtil: Response Body Type -> ${typeof response.result}`);
+      console.info(`HttpUtil: Response Body -> ${response.result}`);
 
       if (response.responseCode === 200) {
-        const result = JSON.parse(response.result as string) as ResultVO<T>;
-        return result;
+        try {
+          const result = JSON.parse(response.result as string) as ResultVO<T>;
+          return result;
+        } catch (parseError) {
+          console.error(`HttpUtil: JSON 解析失败 - ${parseError.message}`);
+          return {
+            code: 500,
+            message: '服务器响应格式错误',
+            data: null
+          };
+        }
       } else {
         return {
           code: response.responseCode,

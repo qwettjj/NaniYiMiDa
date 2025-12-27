@@ -23,12 +23,16 @@ export class UserService {
    */
   static async login(phone: string, password: string): Promise<ResultVO<string>> {
     const url = `${BASE_PATH}/login?phone=${encodeURIComponent(phone)}&password=${encodeURIComponent(password)}`;
+    console.info(`UserService: 正在登录 ${phone}...`);
     const result = await HttpUtil.post<string>(url);
+    console.info(`UserService: 登录接口返回 code=${result.code}`);
 
     // 登录成功后保存 Token
     if (result.code === 0 && result.data) {
       await HttpUtil.saveToken(result.data);
       console.info('UserService: 登录成功，Token 已保存');
+    } else {
+      console.warn(`UserService: 登录未成功, code=${result.code}, message=${result.message}`);
     }
 
     return result;
@@ -41,7 +45,7 @@ export class UserService {
    * @returns 注册是否成功
    */
   static async register(userVO: UserVO): Promise<ResultVO<boolean>> {
-    return await HttpUtil.post<boolean>(BASE_PATH, userVO);
+    return await HttpUtil.post<boolean>(`${BASE_PATH}/register`, userVO);
   }
 
   /**

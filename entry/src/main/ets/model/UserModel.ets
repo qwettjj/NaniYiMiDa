@@ -37,6 +37,14 @@ export interface UserVO {
   imageUrl: string | null;
   /** 用户角色 */
   role: Role | null;
+  /** 昵称 */
+  nickName?: string | null;
+  /** 生日 */
+  birthday?: string | null;
+  /** 个人签名 */
+  signature?: string | null;
+  /** 过敏原 */
+  allergens?: string | null;
 }
 
 /**

@@ -7,9 +7,8 @@ import { RecipeService, PageResponse } from '../service/RecipeService';
 import { ResultVO } from '../service/HttpUtil';
 import { RecipeVO } from '../model/RecipeModel';
 
-@Entry
 @Component
-struct HomePage {
+export struct HomePage {
   /** 食谱列表 */
   @State recipes: RecipeVO[] = [];
   /** 是否正在加载 */

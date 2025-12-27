@@ -5,7 +5,7 @@
 import { router } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
 import { UserService } from '../service/UserService';
-import { ResultVO } from '../service/HttpUtil';
+import { HttpUtil, ResultVO } from '../service/HttpUtil';
 import { UserVO } from '../model/UserModel';
 
 @Entry
@@ -21,6 +21,11 @@ struct RegisterPage {
   @State confirmPassword: string = '';
   /** 是否正在注册 */
   @State isLoading: boolean = false;
+
+  aboutToAppear() {
+    // 确保 HttpUtil 已初始化
+    HttpUtil.init(getContext(this));
+  }
 
   /**
    * 校验输入
@@ -107,6 +112,10 @@ struct RegisterPage {
    * 执行注册
    */
   private async handleRegister(): Promise<void> {
+    // 确保在请求前初始化 Context
+    const uiContext = this.getUIContext();
+    HttpUtil.init(getContext(this));
+
     // 输入校验
     if (!this.validateInput()) {
       return;
@@ -130,31 +139,52 @@ struct RegisterPage {
       };
 
       const result: ResultVO<boolean> = await UserService.register(userVO);
+      console.info('RegisterPage: 注册结果 -', JSON.stringify(result));
 
       if (result.code === 0 && result.data === true) {
         // 注册成功
-        promptAction.showToast({
-          message: '注册成功，请登录',
-          duration: 2000
-        });
+        try {
+          uiContext.getPromptAction().showToast({
+            message: '注册成功，请登录',
+            duration: 2000
+          });
+        } catch (e) {
+          console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+        }
 
         // 延迟跳转到登录页
         setTimeout(() => {
-          router.back();
+          uiContext.runScopedTask(() => {
+            router.back();
+          });
         }, 1000);
       } else {
-        // 注册失败
-        promptAction.showToast({
-          message: result.message || '注册失败，请重试',
-          duration: 2000
-        });
+        // 注册失败（例如 409 手机号已存在）
+        const errorMsg = result.message || '注册失败，请重试';
+        console.warn('RegisterPage: 业务失败 -', errorMsg);
+        try {
+          uiContext.getPromptAction().showToast({
+            message: errorMsg,
+            duration: 2000
+          });
+        } catch (e) {
+          console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+        }
       }
     } catch (error) {
-      console.error('RegisterPage: 注册异常 -', JSON.stringify(error));
-      promptAction.showToast({
-        message: '网络异常，请稍后重试',
-        duration: 2000
-      });
+      console.error('RegisterPage: 注册异常详情 -', JSON.stringify(error));
+      let msg = '网络异常，请稍后重试';
+      if (error && typeof error === 'object' && error['code'] === '100001') {
+        msg = '系统弹窗异常，请重试';
+      }
+      try {
+        uiContext.getPromptAction().showToast({
+          message: msg,
+          duration: 2000
+        });
+      } catch (e) {
+        console.warn('RegisterPage: Toast 显示失败', JSON.stringify(e));
+      }
     } finally {
       this.isLoading = false;
     }
