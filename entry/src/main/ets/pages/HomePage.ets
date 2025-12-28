@@ -314,6 +314,20 @@ export struct HomePage {
         Blank()
 
         Button({ type: ButtonType.Circle, stateEffect: true }) {
+          Text('📷')
+            .fontSize(20)
+            .fontColor('#FFFFFF')
+        }
+        .width(48)
+        .height(48)
+        .backgroundColor('#4CAF50')
+        .margin({ right: 12 })
+        .shadow({ radius: 10, color: 'rgba(76, 175, 80, 0.3)', offsetY: 4 })
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/ScanPage' });
+        })
+
+        Button({ type: ButtonType.Circle, stateEffect: true }) {
           Text('+')
             .fontSize(24)
             .fontColor('#FFFFFF')

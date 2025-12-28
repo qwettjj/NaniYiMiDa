@@ -2,6 +2,68 @@ import { customScan, scanBarcode, scanCore } from '@kit.ScanKit';
 import { router, promptAction } from '@kit.ArkUI';
 import { abilityAccessCtrl, common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { MOCK_PRODUCTS, Product } from '../model/ProductModel';
+
+@CustomDialog
+struct ProductDetailDialog {
+  controller?: CustomDialogController
+  product: Product | null = null
+  onClose: () => void = () => {}
+
+  build() {
+    Column() {
+      if (this.product) {
+        Image(this.product.imageUrl)
+          .width(100)
+          .height(100)
+          .margin({ top: 20, bottom: 10 })
+        
+        Text(this.product.name)
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .margin({ bottom: 10 })
+        
+        Text('配料表：')
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .alignSelf(ItemAlign.Start)
+          .margin({ left: 20, top: 10 })
+        
+        Flex({ wrap: FlexWrap.Wrap }) {
+          ForEach(this.product.ingredients, (item: string) => {
+            Text(item)
+              .fontSize(14)
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+              .backgroundColor('#F5F5F5')
+              .margin(4)
+              .borderRadius(4)
+              .fontColor(this.product?.allergens.includes(item) ? Color.Red : Color.Black)
+          })
+        }
+        .padding({ left: 16, right: 16 })
+
+        if (this.product.allergens.length > 0) {
+           Text('⚠️ 过敏源提示：' + this.product.allergens.join('、'))
+            .fontSize(14)
+            .fontColor(Color.Red)
+            .margin({ top: 10, bottom: 20 })
+        }
+      }
+
+      Button('关闭')
+        .onClick(() => {
+          if (this.controller) {
+            this.controller.close()
+          }
+          this.onClose()
+        })
+        .margin({ bottom: 20, top: 10 })
+    }
+    .backgroundColor(Color.White)
+    .borderRadius(16)
+    .width('90%')
+  }
+}
 
 @Entry
 @Component
@@ -14,12 +76,20 @@ struct ScanPage {
     height: 1080,
     surfaceId: ''
   }
+  
+  dialogController: CustomDialogController | null = null
+  @State currentProduct: Product | null = null
+  isScanning: boolean = true
 
   async aboutToAppear() {
     await this.requestCameraPermission();
   }
 
   async aboutToDisappear() {
+    this.stopScan();
+  }
+
+  stopScan() {
     try {
       customScan.stop();
       customScan.release();
@@ -44,43 +114,69 @@ struct ScanPage {
   }
 
   initScan() {
-    if (!this.userGrant) {
+    if (!this.userGrant || !this.surfaceId) {
       return;
     }
     try {
       this.viewControl.surfaceId = this.surfaceId;
-      // 初始化扫码
-      let scanOptions: scanBarcode.ScanOptions = {
+      let options: scanBarcode.ScanOptions = {
         scanTypes: [scanCore.ScanType.ALL],
         enableMultiMode: true,
         enableAlbum: true
       };
-      customScan.init(scanOptions);
-      // 开启扫码
+      
+      customScan.init(options);
       customScan.start(this.viewControl, (error: BusinessError, result: Array<scanBarcode.ScanResult>) => {
         if (error) {
-          console.error('Scan failed', JSON.stringify(error));
+          console.error('Scan start failed', JSON.stringify(error));
           return;
         }
-        if (result && result.length > 0) {
-          // 停止扫描，防止多次触发
-          customScan.stop();
-          
-          let scanResult = result[0];
-          let content = scanResult.originalValue;
-          
-          console.info('Scan result:', content);
-          promptAction.showToast({ message: `扫描成功: ${content}` });
-          
-          // 模拟处理延迟，然后返回
-          setTimeout(() => {
-             router.back();
-          }, 1500);
+        if (result && result.length > 0 && this.isScanning) {
+          const code = result[0].originalValue;
+          console.info('Scanned code:', code);
+          this.handleScanResult(code);
         }
       });
     } catch (error) {
       console.error('initScan failed', JSON.stringify(error));
     }
+  }
+
+  handleScanResult(code: string) {
+    if (MOCK_PRODUCTS[code]) {
+      this.isScanning = false;
+      this.currentProduct = MOCK_PRODUCTS[code];
+      this.showDialog();
+    } else {
+       // promptAction.showToast({ message: '未找到该商品信息: ' + code });
+    }
+  }
+
+  showDialog() {
+    if (this.dialogController) {
+      this.dialogController.close();
+      this.dialogController = null;
+    }
+    this.dialogController = new CustomDialogController({
+      builder: ProductDetailDialog({
+        product: this.currentProduct,
+        onClose: () => {
+          this.restartScan();
+        }
+      }),
+      autoCancel: false,
+      alignment: DialogAlignment.Center,
+      customStyle: true,
+      cancel: () => {
+        this.restartScan();
+      }
+    });
+    this.dialogController.open();
+  }
+
+  restartScan() {
+    this.isScanning = true;
+    this.currentProduct = null;
   }
 
   build() {
@@ -98,53 +194,50 @@ struct ScanPage {
           .width('100%')
           .height('100%')
       } else {
-        Column() {
-          Text('需要相机权限')
-            .fontColor(Color.White)
-            .onClick(() => {
-              this.requestCameraPermission();
-            })
-        }
-        .justifyContent(FlexAlign.Center)
-        .width('100%')
-        .height('100%')
+        Text('需要相机权限')
+          .fontSize(20)
+          .fontColor(Color.White)
       }
 
-      // 遮罩层和UI
+      // Overlay UI
       Column() {
-        // 顶部栏
         Row() {
+          // Back Button
           Text('< 返回')
-            .fontSize(18)
             .fontColor(Color.White)
+            .fontSize(18)
             .onClick(() => {
               router.back();
             })
-          Text('扫描食材')
-            .fontSize(18)
-            .fontColor(Color.White)
-            .margin({ left: 16 })
+            .margin({ left: 20, top: 40 })
         }
         .width('100%')
-        .padding({ top: 40, left: 20 })
-        .alignItems(VerticalAlign.Center)
-
-        // 扫描框示意
-        Column()
-          .width(250)
-          .height(250)
-          .border({ width: 2, color: Color.White, radius: 4 })
-          .margin({ top: 150 })
+        .alignItems(VerticalAlign.Top)
+        
+        Blank()
 
         Text('将二维码/条形码放入框内，自动扫描')
-          .fontSize(14)
+          .fontSize(16)
           .fontColor(Color.White)
-          .margin({ top: 20 })
+          .margin({ bottom: 100 })
+          
+        // Debug buttons for simulator
+        Row() {
+          Button('模拟 NANI_001')
+            .onClick(() => this.handleScanResult('NANI_001'))
+            .margin(5)
+            .backgroundColor('rgba(255,255,255,0.3)')
+          Button('模拟 NANI_002')
+            .onClick(() => this.handleScanResult('NANI_002'))
+            .margin(5)
+            .backgroundColor('rgba(255,255,255,0.3)')
+        }
+        .margin({ bottom: 50 })
       }
       .width('100%')
       .height('100%')
-      .alignItems(HorizontalAlign.Center)
-      .hitTestBehavior(HitTestMode.Transparent) // 确保点击事件能穿透到下层（如果有交互的话），但这里主要是覆盖层
+      .justifyContent(FlexAlign.SpaceBetween)
+      .hitTestBehavior(HitTestMode.Transparent)
     }
     .width('100%')
     .height('100%')
