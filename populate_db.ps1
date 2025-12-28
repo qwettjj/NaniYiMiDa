@@ -6,17 +6,19 @@ $nickname = "ChefMaster"
 # 1. Register
 Write-Host "Registering..."
 $registerUrl = "$baseUrl/users/register"
-$registerBody = '{"phone":"' + $phone + '","password":"' + $password + '","nickName":"' + $nickname + '"}'
+$registerBody = '{"phoneNumber":"' + $phone + '","password":"' + $password + '","nickName":"' + $nickname + '"}'
 try {
-    Invoke-RestMethod -Uri $registerUrl -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($registerBody)) -ContentType "application/json; charset=utf-8"
+    $regRes = Invoke-RestMethod -Uri $registerUrl -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($registerBody)) -ContentType "application/json; charset=utf-8"
+    Write-Host "Register Response: $($regRes | ConvertTo-Json -Depth 2)"
 } catch {
-    Write-Host "User might already exist, proceeding to login..."
+    Write-Host "Register request failed: $_"
 }
 
 # 2. Login
 Write-Host "Logging in..."
 $loginUrl = "$baseUrl/users/login?phone=$phone&password=$password"
 $loginResponse = Invoke-RestMethod -Uri $loginUrl -Method Post
+Write-Host "Login Response: $($loginResponse | ConvertTo-Json -Depth 2)"
 $token = $loginResponse.data
 Write-Host "Token: $token"
 
@@ -42,9 +44,8 @@ $recipes = @(
 
 foreach ($r in $recipes) {
     # Create Draft
-    $draftBody = '{"title":"' + $r.title + '"}'
     try {
-        $draftRes = Invoke-RestMethod -Uri "$baseUrl/recipes/draft" -Method Post -Headers $headers -Body ([System.Text.Encoding]::UTF8.GetBytes($draftBody)) -ContentType "application/json; charset=utf-8"
+        $draftRes = Invoke-RestMethod -Uri "$baseUrl/recipes/create?title=$($r.title)" -Method Post -Headers $headers
         $recipeId = $draftRes.data
         Write-Host "Created draft: $recipeId for $($r.title)"
     } catch {

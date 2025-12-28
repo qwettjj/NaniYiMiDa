@@ -17,8 +17,8 @@ public class RecipeIngredient {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long ingredientId;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "recipe_id", unique = true)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "recipe_id")
 	private Recipe recipe;
 
 	@Enumerated(EnumType.STRING)
@@ -36,4 +36,3 @@ public class RecipeIngredient {
 		return vo;
 	}
 }
-

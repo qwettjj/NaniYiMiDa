@@ -38,7 +38,7 @@ public class Recipe {
 	@Column(name = "creator_user_id", nullable = false)
 	private Long creatorUserId;
 
-	@Column(name = "favourite_number",nullable = false)
+	@Column(name = "favourite_number", nullable = false)
 	private Integer favouriteNumber;
 
 	@Column(name = "create_time")
@@ -58,7 +58,7 @@ public class Recipe {
 	private List<RecipeStep> steps = new ArrayList<>();
 
 	@OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	private RecipeIngredient ingredient;
+	private List<RecipeIngredient> ingredients = new ArrayList<>();
 
 	public void setSteps(List<RecipeStep> steps) {
 		this.steps.clear();
@@ -81,20 +81,19 @@ public class Recipe {
 		recipeVO.setStatus(status);
 		recipeVO.setImageUrls(new ArrayList<>(imageUrls));
 		List<RecipeStepVO> stepVOS = steps.stream()
-			.sorted((a, b) -> {
-				int aNum = a.getStepNumber() == null ? 0 : a.getStepNumber();
-				int bNum = b.getStepNumber() == null ? 0 : b.getStepNumber();
-				return Integer.compare(aNum, bNum);
-			})
-			.map(RecipeStep::toVO)
-			.collect(Collectors.toList());
+				.sorted((a, b) -> {
+					int aNum = a.getStepNumber() == null ? 0 : a.getStepNumber();
+					int bNum = b.getStepNumber() == null ? 0 : b.getStepNumber();
+					return Integer.compare(aNum, bNum);
+				})
+				.map(RecipeStep::toVO)
+				.collect(Collectors.toList());
 		recipeVO.setSteps(stepVOS);
-		List<IngredientEnum> ingredientEnums = ingredient != null
-			? List.of(ingredient.getIngredient())
-			: Collections.emptyList();
+		List<IngredientEnum> ingredientEnums = ingredients != null
+				? ingredients.stream().map(RecipeIngredient::getIngredient).collect(Collectors.toList())
+				: Collections.emptyList();
 		recipeVO.setIngredients(ingredientEnums);
 		return recipeVO;
 	}
-	
-}
 
+}
