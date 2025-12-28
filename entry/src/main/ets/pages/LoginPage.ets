@@ -150,115 +150,149 @@ struct LoginPage {
   }
 
   build() {
-    Column() {
-      // Logo 区域
-      // 原本地图片（保留备用）
-      // Image($r('app.media.startIcon'))
-      //   .width(100)
-      //   .height(100)
-      //   .margin({ bottom: 20 })
-
-      // 网络图片 Logo
-      Image('https://lh3.googleusercontent.com/gg/AIJ2gl-VdXhHaNDZRnFJJr5QbmvIKzNZG9eq0IPfxrbhnfG0QGOlzBZMemg63exo8sh4jmYk3s8Nybvg0u6W6HzbkfJM0rht9jPbM-h7WI_Q6ieUSbtoK11ZejDUdQQXiV4_x0RFA4bBS9SRM0tTzqFWYTQVn5xKDyWUx6Y-3oXcErB0G4Kb8dn9=s1024-rj')
-        .width(100)
-        .height(100)
-        .margin({ bottom: 20 })
-        .objectFit(ImageFit.Contain)
-
-      // 标题
-      Text('欢迎登录')
-        .fontSize(28)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#333333')
-        .margin({ bottom: 8 })
-
-      Text('NaniYiMiDa 株式会社')
-        .fontSize(14)
-        .fontColor('#999999')
-        .margin({ bottom: 40 })
-
-      // 手机号输入框
-      TextInput({ placeholder: '请输入手机号', text: this.phone })
-        .type(InputType.PhoneNumber)
-        .width('85%')
-        .height(50)
-        .fontSize(16)
-        .placeholderColor('#CCCCCC')
-        .backgroundColor('#F5F5F5')
-        .borderRadius(8)
-        .padding({ left: 16, right: 16 })
-        .margin({ bottom: 16 })
-        .onChange((value: string) => {
-          this.phone = value;
+    Stack() {
+      // 背景渐变
+      Column()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          angle: 180,
+          colors: [['#FFF6E5', 0.0], ['#FFFFFF', 0.6]]
         })
 
-      // 密码输入框
-      TextInput({ placeholder: '请输入密码', text: this.password })
-        .type(InputType.Password)
-        .width('85%')
-        .height(50)
-        .fontSize(16)
-        .placeholderColor('#CCCCCC')
-        .backgroundColor('#F5F5F5')
-        .borderRadius(8)
-        .padding({ left: 16, right: 16 })
-        .margin({ bottom: 32 })
-        .onChange((value: string) => {
-          this.password = value;
-        })
+      Scroll() {
+        Column() {
+          // Logo 区域
+          Image('https://lh3.googleusercontent.com/gg/AIJ2gl-VdXhHaNDZRnFJJr5QbmvIKzNZG9eq0IPfxrbhnfG0QGOlzBZMemg63exo8sh4jmYk3s8Nybvg0u6W6HzbkfJM0rht9jPbM-h7WI_Q6ieUSbtoK11ZejDUdQQXiV4_x0RFA4bBS9SRM0tTzqFWYTQVn5xKDyWUx6Y-3oXcErB0G4Kb8dn9=s1024-rj')
+            .width(120)
+            .height(120)
+            .margin({ top: 80, bottom: 24 })
+            .objectFit(ImageFit.Contain)
+            .shadow({ radius: 20, color: 'rgba(255, 107, 53, 0.2)', offsetY: 10 })
 
-      // 登录按钮
-      Button(this.isLoading ? '登录中...' : '登录')
-        .width('85%')
-        .height(50)
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .backgroundColor(this.isLoading ? '#CCCCCC' : '#FF6B35')
-        .borderRadius(25)
-        .enabled(!this.isLoading)
-        .onClick(() => {
-          this.handleLogin();
-        })
+          // 标题
+          Text('欢迎回来')
+            .fontSize(32)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+            .margin({ bottom: 8 })
 
-      // 注册提示
-      Row() {
-        Text('还没有账号？')
-          .fontSize(14)
-          .fontColor('#999999')
+          Text('登录 NaniYiMiDa 开启美食之旅')
+            .fontSize(16)
+            .fontColor('#999999')
+            .margin({ bottom: 48 })
 
-        Text('立即注册')
-          .fontSize(14)
-          .fontColor('#FF6B35')
-          .fontWeight(FontWeight.Medium)
-          .onClick(() => {
-            this.goToRegister();
-          })
+          // 手机号输入框
+          Column() {
+            Text('手机号')
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ bottom: 8 })
+              .width('100%')
+            
+            TextInput({ placeholder: '请输入手机号', text: this.phone })
+              .type(InputType.PhoneNumber)
+              .width('100%')
+              .height(56)
+              .fontSize(16)
+              .placeholderColor('#CCCCCC')
+              .backgroundColor('#FFFFFF')
+              .borderRadius(16)
+              .padding({ left: 16, right: 16 })
+              .border({ width: 1, color: '#F0F0F0' })
+              .onChange((value: string) => {
+                this.phone = value;
+              })
+          }
+          .width('100%')
+          .margin({ bottom: 24 })
+
+          // 密码输入框
+          Column() {
+            Text('密码')
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ bottom: 8 })
+              .width('100%')
+
+            TextInput({ placeholder: '请输入密码', text: this.password })
+              .type(InputType.Password)
+              .width('100%')
+              .height(56)
+              .fontSize(16)
+              .placeholderColor('#CCCCCC')
+              .backgroundColor('#FFFFFF')
+              .borderRadius(16)
+              .padding({ left: 16, right: 16 })
+              .border({ width: 1, color: '#F0F0F0' })
+              .onChange((value: string) => {
+                this.password = value;
+              })
+          }
+          .width('100%')
+          .margin({ bottom: 40 })
+
+          // 登录按钮
+          Button(this.isLoading ? '登录中...' : '立即登录')
+            .width('100%')
+            .height(56)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .backgroundColor(this.isLoading ? '#FFB094' : '#FF6B35')
+            .borderRadius(28)
+            .shadow({ radius: 20, color: 'rgba(255, 107, 53, 0.4)', offsetY: 8 })
+            .enabled(!this.isLoading)
+            .onClick(() => {
+              this.handleLogin();
+            })
+
+          // 注册提示
+          Row() {
+            Text('还没有账号？')
+              .fontSize(14)
+              .fontColor('#999999')
+
+            Text('立即注册')
+              .fontSize(14)
+              .fontColor('#FF6B35')
+              .fontWeight(FontWeight.Medium)
+              .padding({ left: 4, top: 4, bottom: 4 }) // 增加点击区域
+              .onClick(() => {
+                this.goToRegister();
+              })
+          }
+          .margin({ top: 32 })
+
+          Blank() // 撑开底部
+
+          // 底部协议
+          Row() {
+            Text('登录即表示同意')
+              .fontSize(12)
+              .fontColor('#CCCCCC')
+
+            Text('《用户协议》')
+              .fontSize(12)
+              .fontColor('#FF6B35')
+
+            Text('和')
+              .fontSize(12)
+              .fontColor('#CCCCCC')
+
+            Text('《隐私政策》')
+              .fontSize(12)
+              .fontColor('#FF6B35')
+          }
+          .margin({ top: 60, bottom: 32 })
+        }
+        .width('100%')
+        .constraintSize({ minHeight: '100%' }) // 确保内容撑满屏幕高度
+        .padding({ left: 32, right: 32 })
       }
-      .margin({ top: 24 })
-
-      // 底部协议
-      Row() {
-        Text('登录即表示同意')
-          .fontSize(12)
-          .fontColor('#CCCCCC')
-
-        Text('《用户协议》')
-          .fontSize(12)
-          .fontColor('#FF6B35')
-
-        Text('和')
-          .fontSize(12)
-          .fontColor('#CCCCCC')
-
-        Text('《隐私政策》')
-          .fontSize(12)
-          .fontColor('#FF6B35')
-      }
-      .margin({ top: 60 })
+      .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
-    .justifyContent(FlexAlign.Center)
     .backgroundColor('#FFFFFF')
   }
 }

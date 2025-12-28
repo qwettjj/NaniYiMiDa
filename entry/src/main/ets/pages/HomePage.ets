@@ -123,11 +123,24 @@ export struct HomePage {
   RecipeCard(recipe: RecipeVO) {
     Column() {
       // 食谱封面图
-      Image(this.getCoverImage(recipe))
-        .width('100%')
-        .height(180)
-        .objectFit(ImageFit.Cover)
-        .borderRadius({ topLeft: 12, topRight: 12 })
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Image(this.getCoverImage(recipe))
+          .width('100%')
+          .height(200)
+          .objectFit(ImageFit.Cover)
+          .borderRadius({ topLeft: 16, topRight: 16 })
+
+        // 收藏按钮（视觉效果）
+        Row() {
+          Text('❤')
+            .fontSize(14)
+            .fontColor('#FFFFFF')
+        }
+        .padding(8)
+        .backgroundColor('rgba(0,0,0,0.3)')
+        .borderRadius(20)
+        .margin({ top: 12, right: 12 })
+      }
 
       // 食谱信息
       Column() {
@@ -136,7 +149,7 @@ export struct HomePage {
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor('#333333')
-          .maxLines(2)
+          .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
 
@@ -148,48 +161,63 @@ export struct HomePage {
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
-            .margin({ top: 6 })
+            .margin({ top: 8 })
+            .lineHeight(20)
         }
 
         // 底部统计信息
         Row() {
-          // 步骤数
+          // 作者头像和昵称（模拟）
           Row() {
-            Text('📝')
+            Image($r('app.media.startIcon'))
+              .width(20)
+              .height(20)
+              .borderRadius(10)
+              .margin({ right: 6 })
+            Text('Nani Chef')
               .fontSize(12)
-            Text(`${recipe.stepCount || 0} 步骤`)
-              .fontSize(12)
-              .fontColor('#999999')
-              .margin({ left: 4 })
+              .fontColor('#666666')
           }
 
           Blank()
 
-          // 收藏量
-          Row() {
-            Text('❤')
-              .fontSize(12)
-            Text(`${recipe.favouriteNumber || 0}`)
-              .fontSize(12)
-              .fontColor('#999999')
-              .margin({ left: 4 })
+          // 统计数据
+          Row({ space: 12 }) {
+            Row() {
+              Text('🔥')
+                .fontSize(12)
+                .margin({ right: 4 })
+              Text(`${recipe.favouriteNumber || 0}`)
+                .fontSize(12)
+                .fontColor('#999999')
+            }
+            
+            Row() {
+              Text('📝')
+                .fontSize(12)
+                .margin({ right: 4 })
+              Text(`${recipe.stepCount || 0}`)
+                .fontSize(12)
+                .fontColor('#999999')
+            }
           }
         }
         .width('100%')
-        .margin({ top: 12 })
+        .margin({ top: 16 })
+        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
-      .padding(12)
+      .padding(16)
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
     .backgroundColor('#FFFFFF')
-    .borderRadius(12)
+    .borderRadius(16)
     .shadow({
-      radius: 8,
-      color: 'rgba(0, 0, 0, 0.1)',
+      radius: 12,
+      color: 'rgba(0, 0, 0, 0.05)',
       offsetX: 0,
-      offsetY: 2
+      offsetY: 4
     })
     .onClick(() => {
       this.goToRecipeDetail(recipe.recipeId);
@@ -271,57 +299,98 @@ export struct HomePage {
     Column() {
       // 顶部导航栏
       Row() {
-        Text('レシピセンター')
-          .fontSize(22)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+        Column() {
+          Text('早上好，')
+            .fontSize(14)
+            .fontColor('#999999')
+            .margin({ bottom: 4 })
+          Text('今天想吃点什么？')
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+        }
+        .alignItems(HorizontalAlign.Start)
 
         Blank()
 
-        Button('发布')
-          .fontSize(14)
-          .height(32)
-          .onClick(() => {
-            router.pushUrl({ url: 'pages/RecipePublishPage' });
-          })
+        Button({ type: ButtonType.Circle, stateEffect: true }) {
+          Text('+')
+            .fontSize(24)
+            .fontColor('#FFFFFF')
+            .fontWeight(FontWeight.Lighter)
+            .offset({ y: -2 })
+        }
+        .width(48)
+        .height(48)
+        .backgroundColor('#FF6B35')
+        .shadow({ radius: 10, color: 'rgba(255, 107, 53, 0.3)', offsetY: 4 })
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/RecipePublishPage' });
+        })
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
+      .height(88)
+      .padding({ left: 24, right: 24 })
       .backgroundColor('#FFFFFF')
+      .alignItems(VerticalAlign.Center)
 
       // 内容区域
-      if (this.isLoading) {
-        this.LoadingState()
-      } else if (this.recipes.length === 0) {
-        this.EmptyState()
-      } else {
-        List({ space: 16 }) {
-          ForEach(this.recipes, (recipe: RecipeVO) => {
-            ListItem() {
-              this.RecipeCard(recipe)
-            }
-            .padding({ left: 16, right: 16 })
-          }, (recipe: RecipeVO) => {
-            return recipe.recipeId !== null ? recipe.recipeId.toString() : Math.random().toString();
-          })
-
-          // 列表底部
+      Refresh({ refreshing: $$this.isLoading, offset: 120, friction: 100 }) {
+        List({ space: 20 }) {
+          // 搜索框占位
           ListItem() {
-            this.ListFooter()
+            Row() {
+              Text('🔍')
+                .fontSize(16)
+                .margin({ right: 8 })
+              Text('搜索食谱、食材...')
+                .fontSize(14)
+                .fontColor('#999999')
+            }
+            .width('100%')
+            .height(48)
+            .backgroundColor('#F5F5F5')
+            .borderRadius(24)
+            .padding({ left: 16 })
+            .margin({ bottom: 8 })
+          }
+          .padding({ left: 24, right: 24 })
+
+          if (this.recipes.length === 0 && !this.isLoading) {
+            ListItem() {
+              this.EmptyState()
+            }
+          } else {
+            ForEach(this.recipes, (recipe: RecipeVO) => {
+              ListItem() {
+                this.RecipeCard(recipe)
+              }
+              .padding({ left: 24, right: 24 })
+            }, (recipe: RecipeVO) => {
+              return recipe.recipeId !== null ? recipe.recipeId.toString() : Math.random().toString();
+            })
+
+            // 列表底部
+            ListItem() {
+              this.ListFooter()
+            }
           }
         }
         .width('100%')
-        .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-        .padding({ top: 16, bottom: 16 })
+        .height('100%')
+        .scrollBar(BarState.Off)
         .onReachEnd(() => {
           this.loadMore();
         })
       }
+      .onRefreshing(() => {
+        this.loadRecipes(true);
+      })
+      .width('100%')
+      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5')
+    .backgroundColor('#FFFFFF')
   }
 }

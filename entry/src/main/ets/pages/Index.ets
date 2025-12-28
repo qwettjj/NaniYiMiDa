@@ -1,5 +1,6 @@
 import { HomePage } from './HomePage';
 import { ProfilePage } from './ProfilePage';
+import { router } from '@kit.ArkUI';
 
 @Entry
 @Component
@@ -21,8 +22,12 @@ struct Index {
     .height(50)
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
-      this.currentIndex = targetIndex;
-      this.controller.changeIndex(this.currentIndex);
+      if (targetIndex === 99) {
+        router.pushUrl({ url: 'pages/ScanPage' });
+      } else {
+        this.currentIndex = targetIndex;
+        this.controller.changeIndex(this.currentIndex);
+      }
     })
   }
 
@@ -34,12 +39,19 @@ struct Index {
       .tabBar(this.TabBuilder('首页', 0, $r('app.media.startIcon'), $r('app.media.startIcon')))
 
       TabContent() {
+        // 占位，点击跳转
+      }
+      .tabBar(this.TabBuilder('扫描', 99, $r('app.media.startIcon'), $r('app.media.startIcon')))
+
+      TabContent() {
         ProfilePage()
       }
-      .tabBar(this.TabBuilder('我的', 1, $r('app.media.startIcon'), $r('app.media.startIcon')))
+      .tabBar(this.TabBuilder('我的', 2, $r('app.media.startIcon'), $r('app.media.startIcon')))
     }
     .onChange((index: number) => {
-      this.currentIndex = index;
+      if (index !== 1) {
+        this.currentIndex = index;
+      }
     })
     .scrollable(false)
   }
