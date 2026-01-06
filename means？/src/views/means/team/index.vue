@@ -48,38 +48,38 @@ const teamMembers = [
   {
     name: "ZEROandLIFE",
     title: "前端开发",
-    description: "充满活力的领导者，热爱挑战。负责公司战略和产品开发。",
+    description: "负责web页面结构、样式与交互实现。",
     avatar: "https://avatars.githubusercontent.com/u/147062184?v=4"
   },
   {
-    name: "李四",
-    title: "技术总监",
-    description: "技术专家，有10年开发经验。负责架构设计和后端开发。",
-    avatar: "https://randomuser.me/api/portraits/men/2.jpg"
+    name: "qwettjj",
+    title: "后端开发",
+    description: "负责接口设计与数据库操作，保证数据安全与性能。",
+    avatar: "https://avatars.githubusercontent.com/u/144441049?v=4"
   },
   {
-    name: "王五",
-    title: "产品经理",
-    description: "用户体验专家，擅长将复杂需求转化为简单产品。",
-    avatar: "https://randomuser.me/api/portraits/women/1.jpg"
+    name: "apophisi",
+    title: "后端开发",
+    description: "负责业务逻辑实现。",
+    avatar: "https://avatars.githubusercontent.com/u/166116681?v=4"
   },
   {
-    name: "赵六",
+    name: "Craig-Akutagawa",
+    title: "移动端开发",
+    description: "负责鸿蒙端功能开发与性能优化。",
+    avatar: "https://avatars.githubusercontent.com/u/200924220?v=4"
+  },
+  {
+    name: "Shelia-YX",
     title: "设计师",
-    description: "视觉艺术家，创造令人愉悦的界面设计。",
-    avatar: "https://randomuser.me/api/portraits/women/2.jpg"
+    description: "负责界面原型与视觉稿输出。",
+    avatar: "https://avatars.githubusercontent.com/u/140523267?v=4"
   },
   {
-    name: "钱七",
-    title: "市场总监",
-    description: "营销专家，擅长品牌建设和用户增长。",
-    avatar: "https://randomuser.me/api/portraits/men/3.jpg"
-  },
-  {
-    name: "孙八",
-    title: "数据分析师",
-    description: "数据驱动决策，通过分析优化产品体验。",
-    avatar: "https://randomuser.me/api/portraits/women/3.jpg"
+    name: "DRAGONDIVINIT",
+    title: "产品经理",
+    description: "负责需求收集与原型文档，跟进开发进度并验收功能。",
+    avatar: "https://avatars.githubusercontent.com/u/156163962?s=400&v=4"
   }
 ];
 </script>
