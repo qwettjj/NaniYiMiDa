@@ -39,7 +39,7 @@ public class Recipe {
 	private Long creatorUserId;
 
 	@Column(name = "favourite_number", nullable = false)
-	private Integer favouriteNumber;
+	private Integer favouriteNumber = 0;
 
 	@Column(name = "create_time")
 	@Temporal(TemporalType.TIMESTAMP)
