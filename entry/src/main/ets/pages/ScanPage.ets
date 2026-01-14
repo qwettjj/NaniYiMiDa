@@ -3,6 +3,8 @@ import { router, promptAction } from '@kit.ArkUI';
 import { abilityAccessCtrl, common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { MOCK_PRODUCTS, Product } from '../model/ProductModel';
+import { ToolsService } from '../service/ToolsService';
+import { HttpUtil } from '../service/HttpUtil';
 
 @CustomDialog
 struct ProductDetailDialog {
@@ -82,6 +84,7 @@ struct ScanPage {
   isScanning: boolean = true
 
   async aboutToAppear() {
+    HttpUtil.init(getContext(this));
     await this.requestCameraPermission();
   }
 
@@ -142,13 +145,38 @@ struct ScanPage {
     }
   }
 
-  handleScanResult(code: string) {
+  async handleScanResult(code: string) {
+    // 先尝试调用后端解析接口
+    try {
+      const decodeResult = await ToolsService.decodeQr(code);
+      if (decodeResult.code === 0 && decodeResult.data) {
+        const productId = decodeResult.data;
+        console.info('ScanPage: 后端解析成功, productId:', productId);
+        
+        // 检查本地 Mock 数据是否有该商品
+        if (MOCK_PRODUCTS[productId]) {
+          this.isScanning = false;
+          this.currentProduct = MOCK_PRODUCTS[productId];
+          this.showDialog();
+          return;
+        } else {
+          promptAction.showToast({ message: '商品 ID: ' + productId });
+        }
+      } else {
+        console.warn('ScanPage: 后端解析失败:', decodeResult.message);
+      }
+    } catch (e) {
+      console.error('ScanPage: 调用后端解析接口异常', e instanceof Error ? e.message : JSON.stringify(e));
+    }
+
+    // Fallback: 使用本地 Mock 数据
     if (MOCK_PRODUCTS[code]) {
       this.isScanning = false;
       this.currentProduct = MOCK_PRODUCTS[code];
       this.showDialog();
     } else {
-       // promptAction.showToast({ message: '未找到该商品信息: ' + code });
+      console.info('ScanPage: 未找到商品信息, code:', code);
+      // promptAction.showToast({ message: '未找到该商品信息: ' + code });
     }
   }
 

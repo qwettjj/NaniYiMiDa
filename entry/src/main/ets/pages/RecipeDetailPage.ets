@@ -2,6 +2,9 @@ import { router, promptAction } from '@kit.ArkUI';
 import { RecipeService } from '../service/RecipeService';
 import { RecipeVO, RecipeStepVO, IngredientEnum } from '../model/RecipeModel';
 import { HttpUtil } from '../service/HttpUtil';
+import { HistoryService } from '../service/HistoryService';
+import { FavoriteService } from '../service/FavoriteService';
+import { FavoriteVO } from '../model/FavoriteModel';
 
 @Entry
 @Component
@@ -9,6 +12,7 @@ struct RecipeDetailPage {
   @State recipeId: number = 0;
   @State recipe: RecipeVO | null = null;
   @State isLoading: boolean = true;
+  @State isFavorited: boolean = false;
 
   async aboutToAppear(): Promise<void> {
     HttpUtil.init(getContext(this));
@@ -16,11 +20,23 @@ struct RecipeDetailPage {
     if (params && params['id']) {
       this.recipeId = params['id'] as number;
       await this.loadRecipeDetail();
+      // 添加浏览历史记录
+      await this.addHistory();
     } else {
       promptAction.showToast({ message: '参数错误' });
       setTimeout(() => {
         router.back();
       }, 1000);
+    }
+  }
+
+  async addHistory(): Promise<void> {
+    try {
+      await HistoryService.addHistory(this.recipeId);
+      console.info('RecipeDetail: 浏览历史记录成功');
+    } catch (e) {
+      console.warn('RecipeDetail: 记录浏览历史失败', e instanceof Error ? e.message : JSON.stringify(e));
+      // 不影响主流程，仅记录日志
     }
   }
 
@@ -30,6 +46,8 @@ struct RecipeDetailPage {
       const result = await RecipeService.getRecipeById(this.recipeId);
       if (result.code === 0 && result.data) {
         this.recipe = result.data;
+        // 检查是否已收藏
+        await this.checkFavoriteStatus();
       } else {
         promptAction.showToast({ message: result.message || '获取详情失败' });
       }
@@ -38,6 +56,45 @@ struct RecipeDetailPage {
       promptAction.showToast({ message: '网络异常' });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async checkFavoriteStatus(): Promise<void> {
+    try {
+      const result = await FavoriteService.getCurrentUserFavorites();
+      if (result.code === 0 && result.data) {
+        // 检查当前食谱是否在收藏列表中
+        this.isFavorited = result.data.some((favorite: FavoriteVO) => favorite.recipeId === this.recipeId);
+      }
+    } catch (e) {
+      console.warn('RecipeDetail: 检查收藏状态失败', e instanceof Error ? e.message : JSON.stringify(e));
+    }
+  }
+
+  async toggleFavorite(): Promise<void> {
+    try {
+      if (this.isFavorited) {
+        const result = await FavoriteService.removeFavorite(this.recipeId);
+        if (result.code === 0) {
+          this.isFavorited = false;
+          promptAction.showToast({ message: '取消收藏成功' });
+          console.info('RecipeDetail: 取消收藏成功');
+        } else {
+          promptAction.showToast({ message: result.message || '取消收藏失败' });
+        }
+      } else {
+        const result = await FavoriteService.addFavorite(this.recipeId);
+        if (result.code === 0) {
+          this.isFavorited = true;
+          promptAction.showToast({ message: '收藏成功' });
+          console.info('RecipeDetail: 收藏成功');
+        } else {
+          promptAction.showToast({ message: result.message || '收藏失败' });
+        }
+      }
+    } catch (e) {
+      console.error('RecipeDetail: 切换收藏失败', e instanceof Error ? e.message : JSON.stringify(e));
+      promptAction.showToast({ message: '操作失败' });
     }
   }
 
@@ -100,13 +157,23 @@ struct RecipeDetailPage {
                 .lineHeight(24)
                 .margin({ bottom: 20 })
 
-              // 数据统计
+              // 数据统计与收藏按钮
               Row() {
                 Text(`${this.recipe.favouriteNumber || 0} 人收藏`)
                   .fontSize(14)
                   .fontColor('#999')
                 Blank()
-                // TODO: Add Like/Favorite buttons here
+                // 收藏按钮
+                Button(this.isFavorited ? '已收藏' : '收藏')
+                  .fontSize(14)
+                  .height(32)
+                  .backgroundColor(this.isFavorited ? '#FF6B6B' : '#1698CE')
+                  .fontColor(Color.White)
+                  .borderRadius(16)
+                  .padding({ left: 20, right: 20 })
+                  .onClick(() => {
+                    this.toggleFavorite();
+                  })
               }
               .width('100%')
               .margin({ bottom: 20 })

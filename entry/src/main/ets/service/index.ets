@@ -17,3 +17,15 @@ export {
   PageParams,
   RecipeSearchParams
 } from './RecipeService';
+
+// 收藏服务
+export { FavoriteService } from './FavoriteService';
+
+// 浏览历史服务
+export { HistoryService } from './HistoryService';
+
+// 图片上传服务
+export { ImageService, ImageFileInfo } from './ImageService';
+
+// 工具服务
+export { ToolsService } from './ToolsService';

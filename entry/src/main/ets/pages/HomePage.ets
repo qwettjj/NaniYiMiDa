@@ -6,6 +6,7 @@ import { promptAction, router } from '@kit.ArkUI';
 import { RecipeService, PageResponse } from '../service/RecipeService';
 import { ResultVO } from '../service/HttpUtil';
 import { RecipeVO } from '../model/RecipeModel';
+import { AppColors, AppFonts, AppSpacing, AppRadius } from '../common/theme';
 
 @Component
 export struct HomePage {
@@ -128,27 +129,34 @@ export struct HomePage {
           .width('100%')
           .height(200)
           .objectFit(ImageFit.Cover)
-          .borderRadius({ topLeft: 16, topRight: 16 })
+          .borderRadius({ topLeft: AppRadius.XL, topRight: AppRadius.XL })
+          .alt($r('app.media.startIcon'))
 
         // 收藏按钮（视觉效果）
         Row() {
-          Text('❤')
-            .fontSize(14)
-            .fontColor('#FFFFFF')
+          Text('❤️')
+            .fontSize(AppFonts.BODY)
         }
-        .padding(8)
-        .backgroundColor('rgba(0,0,0,0.3)')
-        .borderRadius(20)
-        .margin({ top: 12, right: 12 })
+        .width(36)
+        .height(36)
+        .backgroundColor('rgba(255,255,255,0.9)')
+        .borderRadius(AppRadius.ROUND)
+        .justifyContent(FlexAlign.Center)
+        .margin({ top: AppSpacing.MD, right: AppSpacing.MD })
+        .shadow({
+          radius: 8,
+          color: AppColors.SHADOW_MEDIUM,
+          offsetY: 2
+        })
       }
 
       // 食谱信息
-      Column() {
+      Column({ space: AppSpacing.SM }) {
         // 标题
         Text(recipe.title || '无标题')
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+          .fontSize(AppFonts.HEADING_4)
+          .fontWeight(AppFonts.WEIGHT_BOLD)
+          .fontColor(AppColors.TEXT_PRIMARY)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
@@ -156,68 +164,62 @@ export struct HomePage {
         // 描述
         if (recipe.description) {
           Text(recipe.description)
-            .fontSize(14)
-            .fontColor('#666666')
+            .fontSize(AppFonts.BODY_SMALL)
+            .fontColor(AppColors.TEXT_SECONDARY)
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
-            .margin({ top: 8 })
-            .lineHeight(20)
+            .lineHeight(18)
         }
 
         // 底部统计信息
         Row() {
-          // 作者头像和昵称（模拟）
-          Row() {
-            Image($r('app.media.startIcon'))
-              .width(20)
-              .height(20)
-              .borderRadius(10)
-              .margin({ right: 6 })
+          // 作者信息
+          Row({ space: 6 }) {
+            Text('👨‍🍳')
+              .fontSize(AppFonts.BODY_SMALL)
             Text('Nani Chef')
-              .fontSize(12)
-              .fontColor('#666666')
+              .fontSize(AppFonts.BODY_SMALL)
+              .fontColor(AppColors.TEXT_SECONDARY)
           }
 
           Blank()
 
           // 统计数据
-          Row({ space: 12 }) {
-            Row() {
-              Text('🔥')
-                .fontSize(12)
-                .margin({ right: 4 })
+          Row({ space: AppSpacing.MD }) {
+            Row({ space: 4 }) {
+              Text('❤️')
+                .fontSize(AppFonts.BODY_SMALL)
               Text(`${recipe.favouriteNumber || 0}`)
-                .fontSize(12)
-                .fontColor('#999999')
+                .fontSize(AppFonts.BODY_SMALL)
+                .fontColor(AppColors.TEXT_TERTIARY)
             }
             
-            Row() {
-              Text('📝')
-                .fontSize(12)
-                .margin({ right: 4 })
-              Text(`${recipe.stepCount || 0}`)
-                .fontSize(12)
-                .fontColor('#999999')
+            Row({ space: 4 }) {
+              Text('📋')
+                .fontSize(AppFonts.BODY_SMALL)
+              Text(`${recipe.stepCount || 0}步`)
+                .fontSize(AppFonts.BODY_SMALL)
+                .fontColor(AppColors.TEXT_TERTIARY)
             }
           }
         }
         .width('100%')
-        .margin({ top: 16 })
+        .margin({ top: AppSpacing.SM })
         .alignItems(VerticalAlign.Center)
       }
       .width('100%')
-      .padding(16)
+      .padding(AppSpacing.LG)
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .backgroundColor('#FFFFFF')
-    .borderRadius(16)
+    .backgroundColor(AppColors.BG_PRIMARY)
+    .borderRadius(AppRadius.XL)
     .shadow({
       radius: 12,
-      color: 'rgba(0, 0, 0, 0.05)',
+      color: AppColors.SHADOW_MEDIUM,
       offsetX: 0,
-      offsetY: 4
+      offsetY: 2
     })
     .onClick(() => {
       this.goToRecipeDetail(recipe.recipeId);
@@ -229,19 +231,17 @@ export struct HomePage {
    */
   @Builder
   EmptyState() {
-    Column() {
+    Column({ space: AppSpacing.LG }) {
       Text('🍳')
         .fontSize(60)
-        .margin({ bottom: 16 })
 
       Text('暂无食谱')
-        .fontSize(18)
-        .fontColor('#999999')
-        .margin({ bottom: 8 })
+        .fontSize(AppFonts.HEADING_3)
+        .fontColor(AppColors.TEXT_SECONDARY)
 
       Text('快来发布第一个食谱吧')
-        .fontSize(14)
-        .fontColor('#CCCCCC')
+        .fontSize(AppFonts.BODY)
+        .fontColor(AppColors.TEXT_TERTIARY)
     }
     .width('100%')
     .height('100%')
@@ -253,16 +253,15 @@ export struct HomePage {
    */
   @Builder
   LoadingState() {
-    Column() {
+    Column({ space: AppSpacing.MD }) {
       LoadingProgress()
         .width(50)
         .height(50)
-        .color('#FF6B35')
+        .color(AppColors.PRIMARY)
 
       Text('加载中...')
-        .fontSize(14)
-        .fontColor('#999999')
-        .margin({ top: 12 })
+        .fontSize(AppFonts.BODY)
+        .fontColor(AppColors.TEXT_SECONDARY)
     }
     .width('100%')
     .height('100%')
@@ -274,20 +273,19 @@ export struct HomePage {
    */
   @Builder
   ListFooter() {
-    Row() {
+    Row({ space: AppSpacing.SM }) {
       if (this.isLoadingMore) {
         LoadingProgress()
           .width(24)
           .height(24)
-          .color('#FF6B35')
+          .color(AppColors.PRIMARY)
         Text('加载中...')
-          .fontSize(14)
-          .fontColor('#999999')
-          .margin({ left: 8 })
+          .fontSize(AppFonts.BODY)
+          .fontColor(AppColors.TEXT_SECONDARY)
       } else if (!this.hasMore) {
         Text('— 没有更多了 —')
-          .fontSize(14)
-          .fontColor('#CCCCCC')
+          .fontSize(AppFonts.BODY)
+          .fontColor(AppColors.TEXT_TERTIARY)
       }
     }
     .width('100%')
@@ -299,15 +297,14 @@ export struct HomePage {
     Column() {
       // 顶部导航栏
       Row() {
-        Column() {
+        Column({ space: 4 }) {
           Text('早上好，')
-            .fontSize(14)
-            .fontColor('#999999')
-            .margin({ bottom: 4 })
+            .fontSize(AppFonts.BODY)
+            .fontColor(AppColors.TEXT_SECONDARY)
           Text('今天想吃点什么？')
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#333333')
+            .fontSize(AppFonts.HEADING_2)
+            .fontWeight(AppFonts.WEIGHT_BOLD)
+            .fontColor(AppColors.TEXT_PRIMARY)
         }
         .alignItems(HorizontalAlign.Start)
 
@@ -316,13 +313,12 @@ export struct HomePage {
         Button({ type: ButtonType.Circle, stateEffect: true }) {
           Text('📷')
             .fontSize(20)
-            .fontColor('#FFFFFF')
         }
         .width(48)
         .height(48)
-        .backgroundColor('#4CAF50')
-        .margin({ right: 12 })
-        .shadow({ radius: 10, color: 'rgba(76, 175, 80, 0.3)', offsetY: 4 })
+        .backgroundColor(AppColors.ACCENT)
+        .margin({ right: AppSpacing.MD })
+        .shadow({ radius: 10, color: `${AppColors.ACCENT}50`, offsetY: 4 })
         .onClick(() => {
           router.pushUrl({ url: 'pages/ScanPage' });
         })
@@ -330,22 +326,22 @@ export struct HomePage {
         Button({ type: ButtonType.Circle, stateEffect: true }) {
           Text('+')
             .fontSize(24)
-            .fontColor('#FFFFFF')
+            .fontColor(AppColors.TEXT_INVERSE)
             .fontWeight(FontWeight.Lighter)
             .offset({ y: -2 })
         }
         .width(48)
         .height(48)
-        .backgroundColor('#FF6B35')
-        .shadow({ radius: 10, color: 'rgba(255, 107, 53, 0.3)', offsetY: 4 })
+        .backgroundColor(AppColors.PRIMARY)
+        .shadow({ radius: 10, color: `${AppColors.PRIMARY}50`, offsetY: 4 })
         .onClick(() => {
           router.pushUrl({ url: 'pages/RecipePublishPage' });
         })
       }
       .width('100%')
       .height(88)
-      .padding({ left: 24, right: 24 })
-      .backgroundColor('#FFFFFF')
+      .padding({ left: AppSpacing.XXL, right: AppSpacing.XXL })
+      .backgroundColor(AppColors.BG_PRIMARY)
       .alignItems(VerticalAlign.Center)
 
       // 内容区域
@@ -353,22 +349,24 @@ export struct HomePage {
         List({ space: 20 }) {
           // 搜索框占位
           ListItem() {
-            Row() {
+            Row({ space: AppSpacing.SM }) {
               Text('🔍')
-                .fontSize(16)
-                .margin({ right: 8 })
+                .fontSize(AppFonts.BODY_LARGE)
               Text('搜索食谱、食材...')
-                .fontSize(14)
-                .fontColor('#999999')
+                .fontSize(AppFonts.BODY)
+                .fontColor(AppColors.TEXT_TERTIARY)
             }
             .width('100%')
             .height(48)
-            .backgroundColor('#F5F5F5')
-            .borderRadius(24)
-            .padding({ left: 16 })
-            .margin({ bottom: 8 })
+            .backgroundColor(AppColors.BG_TERTIARY)
+            .borderRadius(AppRadius.XXL)
+            .padding({ left: AppSpacing.LG })
+            .margin({ bottom: AppSpacing.SM })
+            .onClick(() => {
+              router.pushUrl({ url: 'pages/SearchPage' });
+            })
           }
-          .padding({ left: 24, right: 24 })
+          .padding({ left: AppSpacing.XXL, right: AppSpacing.XXL })
 
           if (this.recipes.length === 0 && !this.isLoading) {
             ListItem() {
@@ -379,7 +377,7 @@ export struct HomePage {
               ListItem() {
                 this.RecipeCard(recipe)
               }
-              .padding({ left: 24, right: 24 })
+              .padding({ left: AppSpacing.XXL, right: AppSpacing.XXL })
             }, (recipe: RecipeVO) => {
               return recipe.recipeId !== null ? recipe.recipeId.toString() : Math.random().toString();
             })
@@ -405,6 +403,6 @@ export struct HomePage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#FFFFFF')
+    .backgroundColor(AppColors.BG_SECONDARY)
   }
 }

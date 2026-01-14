@@ -21,18 +21,20 @@ export struct FavoritesPage {
       const favResult = await FavoriteService.getCurrentUserFavorites();
       if (favResult.code === 0 && favResult.data) {
         const favs = favResult.data;
-        const recipes: RecipeVO[] = [];
         
-        // 串行获取食谱详情（实际项目中建议后端提供批量接口）
-        for (const fav of favs) {
-          if (fav.recipeId) {
-            const recipeResult = await RecipeService.getRecipeById(fav.recipeId);
-            if (recipeResult.code === 0 && recipeResult.data) {
-              recipes.push(recipeResult.data);
-            }
-          }
-        }
-        this.favoriteRecipes = recipes;
+        // 使用 Promise.all 并行请求食谱详情，提升性能
+        const promises = favs
+          .filter(fav => fav.recipeId !== null)
+          .map(fav => RecipeService.getRecipeById(fav.recipeId!));
+        
+        const results = await Promise.all(promises);
+        
+        // 过滤成功的结果
+        this.favoriteRecipes = results
+          .filter(r => r.code === 0 && r.data !== null)
+          .map(r => r.data!);
+        
+        console.info(`FavoritesPage: 成功加载 ${this.favoriteRecipes.length} 个收藏食谱`);
       } else {
         this.getUIContext().getPromptAction().showToast({ message: favResult.message || '获取收藏失败' });
       }
@@ -44,6 +46,7 @@ export struct FavoritesPage {
         msg = JSON.stringify(e);
       }
       console.error('FavoritesPage: 加载失败', msg);
+      this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
     } finally {
       this.isLoading = false;
     }
