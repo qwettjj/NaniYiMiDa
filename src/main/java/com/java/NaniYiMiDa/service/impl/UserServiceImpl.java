@@ -110,11 +110,8 @@ public class UserServiceImpl implements UserService {
 		if (userVO.getAllergens() != null) {
 			user.setAllergens(userVO.getAllergens());
 		}
-		// Do NOT allow clients to directly set
-		// followerCount/followingCount/favouriteCount here
 		userRepository.save(user);
 
-		// 重要：更新 Session 中的用户信息，否则后续请求获取到的仍是旧数据
 		httpServletRequest.getSession().setAttribute("currentUser", user);
 
 		return true;
