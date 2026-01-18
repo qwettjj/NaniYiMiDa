@@ -40,15 +40,15 @@ export class UserService {
 
   /**
    * 用户注册
-   * POST /api/users
+   * POST /api/users/register
    * @param userVO 用户注册信息（需包含 phoneNumber, password, userName）
    * @returns 注册是否成功
    */
   static async register(userVO: UserVO): Promise<ResultVO<boolean>> {
     return await HttpUtil.post<boolean>(`${BASE_PATH}/register`, userVO);
   }
-
   /**
+
    * 获取当前登录用户信息
    * GET /api/users/me
    * @returns 当前用户信息

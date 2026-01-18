@@ -319,4 +319,7 @@ export class RecipeService {
   static async getRecipeById(recipeId: number): Promise<ResultVO<RecipeVO>> {
     return await HttpUtil.get<RecipeVO>(`${BASE_PATH}/${recipeId}`);
   }
+
+
 }
+

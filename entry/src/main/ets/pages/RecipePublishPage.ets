@@ -95,10 +95,19 @@ struct RecipePublishPage {
       console.info('Publish: 5. Publishing...');
       const publishRes = await RecipeService.publishRecipe(this.recipeId);
       if (publishRes.code === 0) {
-        promptAction.showToast({ message: '发布成功！' });
-        setTimeout(() => {
-          router.back();
-        }, 1500);
+        try {
+          promptAction.showToast({ message: '发布成功！' });
+          // 使用 setTimeout 确保页面执行后再跳转
+          setTimeout(() => {
+            try {
+              router.back();
+            } catch (e) {
+              console.error('router.back failed', e);
+            }
+          }, 300); // 延迟 300ms 返回，避免 UI 执行上下文丢失
+        } catch (e) {
+          console.error('Toast or router error:', e);
+        }
       } else {
         throw new Error(publishRes.message || '发布失败');
       }

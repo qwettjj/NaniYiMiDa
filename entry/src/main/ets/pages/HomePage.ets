@@ -22,7 +22,10 @@ export struct HomePage {
   private pageSize: number = 10;
   /** 是否正在加载更多 */
   @State isLoadingMore: boolean = false;
-
+  /** 搜索框里的文字 */
+  @State keyword: string = '';
+  /** 是否在搜索 */
+  @State isSearching: boolean = false;
   /**
    * 页面即将显示时加载数据
    */
@@ -82,12 +85,17 @@ export struct HomePage {
    * 加载更多
    */
   private async loadMore(): Promise<void> {
-    if (this.isLoadingMore || !this.hasMore) {
-      return;
-    }
+    if (this.isLoadingMore || !this.hasMore) return;
+
     this.currentPage++;
-    await this.loadRecipes(false);
+
+    if (this.keyword.trim()) {
+      await this.search(false);
+    } else {
+      await this.loadRecipes(false);
+    }
   }
+
 
   /**
    * 查看食谱详情
@@ -115,6 +123,55 @@ export struct HomePage {
       return recipe.imageUrls[0];
     }
     return $r('app.media.startIcon');
+  }
+
+  /**
+   * 实现搜索功能
+   */
+  private async search(isRefresh: boolean = true): Promise<void> {
+    const kw = this.keyword.trim();
+
+    // 关键词为空：回到“最近”
+    if (!kw) {
+      await this.loadRecipes(true);
+      return;
+    }
+
+    if (isRefresh) {
+      this.isLoading = true;
+      this.currentPage = 0;
+    } else {
+      this.isLoadingMore = true;
+    }
+
+    this.isSearching = true;
+    try {
+      const result = await RecipeService.searchRecipes({
+        keyword: kw,
+        page: this.currentPage,
+        size: this.pageSize
+      });
+
+      if (result.code === 0 && result.data) {
+        const pageData = result.data;
+        if (isRefresh) {
+          this.recipes = pageData.content;
+        } else {
+          this.recipes = [...this.recipes, ...pageData.content];
+        }
+        this.hasMore = !pageData.last;
+        this.currentPage = pageData.number;
+      } else {
+        promptAction.showToast({ message: result.message || '搜索失败', duration: 2000 });
+      }
+    } catch (e) {
+      console.error('HomePage: 搜索异常 -', JSON.stringify(e));
+      promptAction.showToast({ message: '网络异常，请稍后重试', duration: 2000 });
+    } finally {
+      this.isLoading = false;
+      this.isLoadingMore = false;
+      this.isSearching = false;
+    }
   }
 
   /**
@@ -352,19 +409,22 @@ export struct HomePage {
             Row({ space: AppSpacing.SM }) {
               Text('🔍')
                 .fontSize(AppFonts.BODY_LARGE)
-              Text('搜索食谱、食材...')
-                .fontSize(AppFonts.BODY)
-                .fontColor(AppColors.TEXT_TERTIARY)
+
+              TextInput({ placeholder: '搜索食谱、食材...', text: this.keyword })
+                .layoutWeight(1)
+                .backgroundColor(Color.Transparent)
+                .onChange((v: string) => { this.keyword = v; })
+                .onSubmit(() => { this.search(true); })
+
+              Button('搜索')
+                .height(36)
+                .onClick(() => { this.search(true); })
             }
             .width('100%')
             .height(48)
             .backgroundColor(AppColors.BG_TERTIARY)
             .borderRadius(AppRadius.XXL)
-            .padding({ left: AppSpacing.LG })
-            .margin({ bottom: AppSpacing.SM })
-            .onClick(() => {
-              router.pushUrl({ url: 'pages/SearchPage' });
-            })
+            .padding({ left: AppSpacing.LG, right: AppSpacing.MD })
           }
           .padding({ left: AppSpacing.XXL, right: AppSpacing.XXL })
 
@@ -396,7 +456,11 @@ export struct HomePage {
         })
       }
       .onRefreshing(() => {
-        this.loadRecipes(true);
+        if (this.keyword.trim()) {
+          this.search(true);
+        } else {
+          this.loadRecipes(true);
+        }
       })
       .width('100%')
       .layoutWeight(1)
