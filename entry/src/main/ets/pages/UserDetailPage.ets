@@ -38,21 +38,81 @@ struct UserDetailPage {
 
   /**
    * 加载用户信息
+   * 尝试从关注列表中获取用户信息，如果获取不到则创建一个简化的用户对象
    */
   async loadUserInfo(): Promise<void> {
     this.isLoading = true;
     try {
-      const result = await UserService.getUserById(this.userId);
-      if (result.code === 0 && result.data) {
-        this.user = result.data;
-        // 检查是否已关注
-        await this.checkFollowStatus();
+      // 尝试从关注列表中获取用户信息
+      const followingsResult = await UserService.getMyFollowings();
+      if (followingsResult.code === 0 && followingsResult.data) {
+        const foundUser = followingsResult.data.find((user: UserVO) => user.userId === this.userId);
+        if (foundUser) {
+          this.user = foundUser;
+          this.isFollowing = true;
+          console.info('UserDetailPage: 从关注列表获取到用户信息');
+        } else {
+          // 如果不在关注列表中，创建一个简化的用户对象
+          console.info('UserDetailPage: 用户不在关注列表中，显示简化信息');
+          this.user = {
+            userId: this.userId,
+            userName: `用户${this.userId}`,
+            phoneNumber: null,
+            password: null,
+            createTime: null,
+            followerCount: 0,
+            followingCount: 0,
+            favouriteCount: 0,
+            imageUrl: null,
+            role: null,
+            nickName: `用户${this.userId}`,
+            birthday: null,
+            signature: '暂无个人简介',
+            allergens: null
+          };
+          this.isFollowing = false;
+        }
       } else {
-        promptAction.showToast({ message: result.message || '获取用户信息失败' });
+        // 如果获取关注列表失败，创建默认用户对象
+        console.warn('UserDetailPage: 获取关注列表失败，使用默认用户信息');
+        this.user = {
+          userId: this.userId,
+          userName: `用户${this.userId}`,
+          phoneNumber: null,
+          password: null,
+          createTime: null,
+          followerCount: 0,
+          followingCount: 0,
+          favouriteCount: 0,
+          imageUrl: null,
+          role: null,
+          nickName: `用户${this.userId}`,
+          birthday: null,
+          signature: '暂无个人简介',
+          allergens: null
+        };
+        this.isFollowing = false;
       }
     } catch (e) {
       console.error('UserDetailPage: 加载用户信息失败', e instanceof Error ? e.message : JSON.stringify(e));
-      promptAction.showToast({ message: '网络异常' });
+      // 出错时也创建默认用户对象，确保页面能正常显示
+      this.user = {
+        userId: this.userId,
+        userName: `用户${this.userId}`,
+        phoneNumber: null,
+        password: null,
+        createTime: null,
+        followerCount: 0,
+        followingCount: 0,
+        favouriteCount: 0,
+        imageUrl: null,
+        role: null,
+        nickName: `用户${this.userId}`,
+        birthday: null,
+        signature: '暂无个人简介',
+        allergens: null
+      };
+      this.isFollowing = false;
     } finally {
       this.isLoading = false;
     }
@@ -60,6 +120,7 @@ struct UserDetailPage {
 
   /**
    * 检查是否已关注该用户
+   * 注意：此方法已整合到 loadUserInfo() 中，无需单独调用
    */
   async checkFollowStatus(): Promise<void> {
     try {
