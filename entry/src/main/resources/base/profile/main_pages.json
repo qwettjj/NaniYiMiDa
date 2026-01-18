@@ -8,6 +8,8 @@
     "pages/FollowingPage",
     "pages/RecipeDetailPage",
     "pages/RecipePublishPage",
-    "pages/ScanPage"
+    "pages/ScanPage",
+    "pages/DraftPage",
+    "pages/HistoryPage"
   ]
 }

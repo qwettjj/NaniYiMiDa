@@ -14,12 +14,72 @@ struct RecipePublishPage {
   @State steps: RecipeStepVO[] = [];
   @State recipeId: number | null = null;
   @State isSubmitting: boolean = false;
-  // 图片上传测试
-  @State testImageUrl: string = '';
+  // 图片上传相关
+  @State uploadedImageUrl: string = '';
   @State isUploading: boolean = false;
 
   async aboutToAppear() {
     HttpUtil.init(getContext(this));
+  }
+
+  // 图片上传功能
+  async uploadImage() {
+    try {
+      this.isUploading = true;
+      console.info('RecipePublish: 开始选择图片...');
+
+      // 配置图片选择器
+      const photoSelectOptions = new picker.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = picker.PhotoViewMIMETypes.IMAGE_TYPE;
+      photoSelectOptions.maxSelectNumber = 1;
+
+      // 打开图片选择器
+      const photoPicker = new picker.PhotoViewPicker();
+      const result = await photoPicker.select(photoSelectOptions);
+
+      if (result.photoUris && result.photoUris.length > 0) {
+        const uri = result.photoUris[0];
+        console.info('RecipePublish: 已选择图片 -', uri);
+
+        // 构造文件信息
+        const fileInfo: ImageFileInfo = {
+          filename: `recipe_${Date.now()}.jpg`,
+          uri: uri,
+          type: 'image/jpeg'
+        };
+
+        // 调用上传服务
+        console.info('RecipePublish: 开始上传...');
+        const uploadResult = await ImageService.uploadImage(fileInfo);
+
+        if (uploadResult.code === 0 && uploadResult.data) {
+          this.uploadedImageUrl = uploadResult.data;
+          console.info('RecipePublish: 上传成功！URL -', uploadResult.data);
+          promptAction.showToast({
+            message: '上传成功！',
+            duration: 2000
+          });
+        } else {
+          console.error('RecipePublish: 上传失败 -', uploadResult.message);
+          promptAction.showToast({
+            message: uploadResult.message || '上传失败',
+            duration: 3000
+          });
+        }
+      } else {
+        console.info('RecipePublish: 未选择图片');
+        promptAction.showToast({ message: '未选择图片' });
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('RecipePublish: 测试上传异常 -', errorMsg);
+      promptAction.showToast({
+        message: `上传异常: ${errorMsg}`,
+        duration: 3000
+      });
+    } finally {
+      this.isUploading = false;
+    }
   }
 
   // 添加步骤
@@ -176,6 +236,59 @@ struct RecipePublishPage {
             .height(80)
             .backgroundColor('#F5F5F5')
             .borderRadius(8)
+
+          // ===== 图片上传功能 =====
+          Divider().strokeWidth(2).color('#E0E0E0').margin({ top: 10, bottom: 10 })
+
+          Column({ space: 10 }) {
+            Text('📸 上传封面图片')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+
+            Button(this.isUploading ? '上传中...' : '选择图片')
+              .width('100%')
+              .height(40)
+              .backgroundColor('#4CAF50')
+              .enabled(!this.isUploading)
+              .onClick(() => this.uploadImage())
+
+            if (this.uploadedImageUrl) {
+              Column({ space: 8 }) {
+                Text('✅ 上传成功！')
+                  .fontSize(14)
+                  .fontColor(Color.Green)
+                  .fontWeight(FontWeight.Bold)
+
+                Text(`URL: ${this.uploadedImageUrl}`)
+                  .fontSize(12)
+                  .fontColor('#666')
+                  .maxLines(3)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  .width('100%')
+                  .padding(8)
+                  .backgroundColor('#F0F0F0')
+                  .borderRadius(4)
+
+                Image(this.uploadedImageUrl)
+                  .width('100%')
+                  .height(200)
+                  .objectFit(ImageFit.Contain)
+                  .backgroundColor('#F5F5F5')
+                  .borderRadius(8)
+              }
+              .width('100%')
+              .padding(10)
+              .backgroundColor('#E8F5E9')
+              .borderRadius(8)
+            }
+          }
+          .width('100%')
+          .padding(10)
+          .backgroundColor('#FFF9C4')
+          .borderRadius(8)
+
+          Divider().strokeWidth(2).color('#E0E0E0').margin({ top: 10, bottom: 10 })
+          // ===== 图片上传结束 =====
 
           // 步骤
           Row() {

@@ -209,79 +209,10 @@ struct HistoryPage {
         List() {
           ForEach(this.historyList, (history: HistoryVO) => {
             ListItem() {
-              Row() {
-                const recipe = this.recipeMap.get(history.recipeId!);
-
-                // 食谱封面
-                if (recipe && recipe.imageUrls && recipe.imageUrls.length > 0) {
-                  Image(recipe.imageUrls[0])
-                    .width(100)
-                    .height(100)
-                    .objectFit(ImageFit.Cover)
-                    .borderRadius(8)
-                } else {
-                  Column()
-                    .width(100)
-                    .height(100)
-                    .backgroundColor('#F0F0F0')
-                    .borderRadius(8)
-                }
-
-                // 食谱信息
-                Column() {
-                  Text(recipe?.title || '未知食谱')
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Bold)
-                    .maxLines(2)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    .width('100%')
-
-                  Text(`浏览时间: ${this.formatTime(history.viewTime)}`)
-                    .fontSize(12)
-                    .fontColor('#999')
-                    .margin({ top: 5 })
-                    .width('100%')
-
-                  // 操作按钮
-                  Row() {
-                    Button('查看')
-                      .fontSize(12)
-                      .height(28)
-                      .backgroundColor('#1698CE')
-                      .fontColor(Color.White)
-                      .borderRadius(14)
-                      .padding({ left: 16, right: 16 })
-                      .onClick(() => {
-                        this.goToRecipeDetail(history.recipeId);
-                      })
-
-                    Button('删除')
-                      .fontSize(12)
-                      .height(28)
-                      .backgroundColor('#FF6B6B')
-                      .fontColor(Color.White)
-                      .borderRadius(14)
-                      .padding({ left: 16, right: 16 })
-                      .margin({ left: 10 })
-                      .onClick(() => {
-                        this.deleteHistory(history.historyId);
-                      })
-                  }
-                  .margin({ top: 8 })
-                }
-                .layoutWeight(1)
-                .margin({ left: 12 })
-                .alignItems(HorizontalAlign.Start)
-                .justifyContent(FlexAlign.SpaceBetween)
-              }
-              .width('100%')
-              .padding(15)
-              .backgroundColor(Color.White)
-              .onClick(() => {
-                this.goToRecipeDetail(history.recipeId);
-              })
+              this.buildHistoryItem(history)
             }
-          }, (history: HistoryVO, index: number) => `${history.historyId}_${index}`)
+            .onClick(() => this.goToRecipeDetail(history.recipeId))
+          }, (history: HistoryVO) => history.historyId?.toString() || '')
 
           // 加载更多提示
           if (this.hasMore) {
@@ -321,5 +252,78 @@ struct HistoryPage {
     .width('100%')
     .height('100%')
     .backgroundColor('#F5F5F5')
+  }
+
+  @Builder
+  buildHistoryItem(history: HistoryVO) {
+    Row() {
+      // 食谱封面
+      if (this.recipeMap.get(history.recipeId!) && 
+          this.recipeMap.get(history.recipeId!)!.imageUrls && 
+          this.recipeMap.get(history.recipeId!)!.imageUrls.length > 0) {
+        Image(this.recipeMap.get(history.recipeId!)!.imageUrls[0])
+          .width(100)
+          .height(100)
+          .objectFit(ImageFit.Cover)
+          .borderRadius(8)
+      } else {
+        Column()
+          .width(100)
+          .height(100)
+          .backgroundColor('#F0F0F0')
+          .borderRadius(8)
+      }
+
+      // 食谱信息
+      Column() {
+        Text(this.recipeMap.get(history.recipeId!) && this.recipeMap.get(history.recipeId!)!.title ? 
+             this.recipeMap.get(history.recipeId!)!.title : '未知食谱')
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+
+        Text(`浏览时间: ${this.formatTime(history.createTime)}`)
+          .fontSize(12)
+          .fontColor('#999')
+          .margin({ top: 5 })
+          .width('100%')
+
+        // 操作按钮
+        Row() {
+          Button('查看')
+            .fontSize(12)
+            .height(28)
+            .backgroundColor('#1698CE')
+            .fontColor(Color.White)
+            .borderRadius(14)
+            .padding({ left: 16, right: 16 })
+            .onClick(() => {
+              this.goToRecipeDetail(history.recipeId);
+            })
+
+          Button('删除')
+            .fontSize(12)
+            .height(28)
+            .backgroundColor('#FF6B6B')
+            .fontColor(Color.White)
+            .borderRadius(14)
+            .padding({ left: 16, right: 16 })
+            .margin({ left: 10 })
+            .onClick(() => {
+              this.deleteHistory(history.historyId);
+            })
+        }
+        .margin({ top: 8 })
+      }
+      .layoutWeight(1)
+      .margin({ left: 12 })
+      .alignItems(HorizontalAlign.Start)
+      .justifyContent(FlexAlign.SpaceBetween)
+    }
+    .width('100%')
+    .padding(15)
+    .backgroundColor(Color.White)
   }
 }

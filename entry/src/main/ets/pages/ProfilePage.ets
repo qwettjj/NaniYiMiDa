@@ -53,7 +53,7 @@ export struct ProfilePage {
           Column({ space: AppSpacing.MD }) {
             // 头像（带边框和阴影）
             Stack() {
-              Image(this.currentUser?.imageUrl || $r('app.media.startIcon'))
+              Image(this.currentUser && this.currentUser.imageUrl ? this.currentUser.imageUrl : $r('app.media.startIcon'))
                 .width(100)
                 .height(100)
                 .borderRadius(AppRadius.ROUND)
@@ -74,13 +74,13 @@ export struct ProfilePage {
             })
 
             // 昵称
-            Text(this.currentUser?.nickName || this.currentUser?.userName || '用户')
+            Text(this.currentUser ? (this.currentUser.nickName || this.currentUser.userName || '用户') : '用户')
               .fontSize(AppFonts.HEADING_2)
               .fontWeight(AppFonts.WEIGHT_BOLD)
               .fontColor(AppColors.TEXT_INVERSE)
 
             // 签名
-            Text(this.currentUser?.signature || '这个人很懒，还没有签名~')
+            Text(this.currentUser ? (this.currentUser.signature || '这个人很懒，还没有签名~') : '这个人很懒，还没有签名~')
               .fontSize(AppFonts.BODY)
               .fontColor(`${AppColors.TEXT_INVERSE}CC`)
               .maxLines(2)
@@ -105,7 +105,7 @@ export struct ProfilePage {
             Text('👥')
               .fontSize(AppFonts.HEADING_3)
 
-            Text(this.currentUser?.followingCount?.toString() || '0')
+            Text(this.currentUser ? (this.currentUser.followingCount ?? 0).toString() : '0')
               .fontSize(AppFonts.HEADING_3)
               .fontWeight(AppFonts.WEIGHT_BOLD)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -132,7 +132,7 @@ export struct ProfilePage {
             Text('⭐')
               .fontSize(AppFonts.HEADING_3)
 
-            Text(this.currentUser?.followerCount?.toString() || '0')
+            Text(this.currentUser ? (this.currentUser.followerCount ?? 0).toString() : '0')
               .fontSize(AppFonts.HEADING_3)
               .fontWeight(AppFonts.WEIGHT_BOLD)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -159,7 +159,7 @@ export struct ProfilePage {
             Text('❤️')
               .fontSize(AppFonts.HEADING_3)
 
-            Text(this.currentUser?.favouriteCount?.toString() || '0')
+            Text(this.currentUser ? (this.currentUser.favouriteCount ?? 0).toString() : '0')
               .fontSize(AppFonts.HEADING_3)
               .fontWeight(AppFonts.WEIGHT_BOLD)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -188,8 +188,8 @@ export struct ProfilePage {
 
         // 个人信息卡片
         Column({ space: 0 }) {
-          this.InfoItem('🎂 生日', this.currentUser?.birthday || '未设置', true)
-          this.InfoItem('🚫 过敏原', this.currentUser?.allergens || '无', false)
+          this.InfoItem('🎂 生日', this.currentUser ? (this.currentUser.birthday || '未设置') : '未设置', true)
+          this.InfoItem('🚫 过敏原', this.currentUser ? (this.currentUser.allergens || '无') : '无', false)
         }
         .width('100%')
         .backgroundColor(AppColors.BG_PRIMARY)

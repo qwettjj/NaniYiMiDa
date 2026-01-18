@@ -39,7 +39,7 @@ struct ProductDetailDialog {
               .backgroundColor('#F5F5F5')
               .margin(4)
               .borderRadius(4)
-              .fontColor(this.product?.allergens.includes(item) ? Color.Red : Color.Black)
+              .fontColor(this.product && this.product.allergens.includes(item) ? Color.Red : Color.Black)
           })
         }
         .padding({ left: 16, right: 16 })

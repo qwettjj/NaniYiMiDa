@@ -184,8 +184,8 @@ export class HttpUtil {
         method: config.method,
         header: config.header || HttpUtil.buildHeaders(token),
         extraData: config.extraData,
-        connectTimeout: config.connectTimeout || 30000,
-        readTimeout: config.readTimeout || 30000
+        connectTimeout: config.connectTimeout || 10000,  // 10秒连接超时（优化：原30秒）
+        readTimeout: config.readTimeout || 20000         // 20秒读取超时（优化：原30秒）
       });
 
       console.info(`HttpUtil: ${config.method} ${url} -> ${response.responseCode}`);
