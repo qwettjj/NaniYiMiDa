@@ -26,13 +26,16 @@ public class OssUtil {
     public String upload(String objectName, InputStream inputStream) {
         OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, inputStream);
+        String url = null;
         try {
             ossClient.putObject(putObjectRequest);
-        }finally {
+            // 在关闭客户端前生成预签名 URL
+            url = ossClient.generatePresignedUrl(bucketName, objectName, new Date()).toString().split("\\?Expires")[0];
+        } finally {
             if (ossClient != null) {
                 ossClient.shutdown();
             }
         }
-        return ossClient.generatePresignedUrl(bucketName, objectName, new Date()).toString().split("\\?Expires")[0];
+        return url;
     }
 }
