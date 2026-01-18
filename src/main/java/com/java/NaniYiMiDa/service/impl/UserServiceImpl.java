@@ -78,7 +78,10 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserVO getCurrentUserInformation() {
-		User user = requireCurrentUser();
+		// 从 Session 中获取用户ID，然后从数据库重新读取最新信息
+		User sessionUser = requireCurrentUser();
+		User user = userRepository.findById(sessionUser.getUserId())
+				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
 		return user.toVO();
 	}
 
@@ -88,7 +91,11 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.BAD_REQUEST, "更新内容不能为空");
 		}
 
-		User user = requireCurrentUser();
+		// 从数据库获取受管理的实体，而不是使用 Session 中的分离对象
+		User sessionUser = requireCurrentUser();
+		User user = userRepository.findById(sessionUser.getUserId())
+				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
+
 		if (userVO.getPassword() != null) {
 			user.setPassword(userVO.getPassword());
 		}
