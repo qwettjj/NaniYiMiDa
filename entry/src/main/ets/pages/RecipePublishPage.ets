@@ -2,6 +2,8 @@ import { router, promptAction } from '@kit.ArkUI';
 import { RecipeService } from '../service/RecipeService';
 import { RecipeVO, RecipeStepVO, IngredientEnum } from '../model/RecipeModel';
 import { HttpUtil } from '../service/HttpUtil';
+import { ImageService, ImageFileInfo } from '../service/ImageService';
+import { picker } from '@kit.CoreFileKit';
 
 @Entry
 @Component
@@ -12,6 +14,9 @@ struct RecipePublishPage {
   @State steps: RecipeStepVO[] = [];
   @State recipeId: number | null = null;
   @State isSubmitting: boolean = false;
+  // 图片上传测试
+  @State testImageUrl: string = '';
+  @State isUploading: boolean = false;
 
   async aboutToAppear() {
     HttpUtil.init(getContext(this));
