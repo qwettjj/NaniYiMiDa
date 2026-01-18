@@ -31,16 +31,16 @@ export class ImageService {
   /**
    * 上传图片到服务器 (方案C: 响应头传递 URL)
    * POST /api/images
-   * 
+   *
    * 实现方案：
    * - 后端：在响应头中添加 X-Image-Url 字段返回 OSS URL
    * - 前端：监听 headerReceive 事件提取 URL，解决 TaskState 无 response 的问题
-   * 
+   *
    * 优点：
    * - 使用官方 request.uploadFile() API
    * - 可获取真实的 OSS URL
    * - 保持代码简洁性
-   * 
+   *
    * @param fileInfo 图片文件信息
    * @returns 包含 OSS URL 的 ResultVO
    */
@@ -95,11 +95,11 @@ export class ImageService {
         // 监听上传完成
         uploadTask.on('complete', (taskStates: Array<request.TaskState>) => {
           console.info('ImageService: 上传完成事件触发');
-          
+
           if (taskStates && taskStates.length > 0) {
             const state = taskStates[0];
             console.info(`ImageService: responseCode=${state.responseCode}, message=${state.message}`);
-            
+
             // 检查 HTTP 响应码
             if (state.responseCode === 200) {
               // 通过 headerReceive 事件已获取到 URL
@@ -130,7 +130,7 @@ export class ImageService {
               return;
             }
           }
-          
+
           // taskStates 为空
           reject({
             code: -1,
@@ -142,7 +142,7 @@ export class ImageService {
         // 监听上传失败
         uploadTask.on('fail', (taskStates: Array<request.TaskState>) => {
           console.error('ImageService: 上传失败事件触发');
-          
+
           if (taskStates && taskStates.length > 0) {
             const state = taskStates[0];
             reject({

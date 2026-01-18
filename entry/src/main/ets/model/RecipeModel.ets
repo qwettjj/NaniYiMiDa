@@ -141,6 +141,8 @@ export interface RecipeStepVO {
 export interface RecipeVO {
   /** 食谱ID */
   recipeId: number | null;
+
+  creatorUserId: number | null;
   /** 食谱标题 */
   title: string | null;
   /** 食谱描述 */
@@ -229,6 +231,7 @@ export interface RecipeSearchRequest {
 export function createEmptyRecipeVO(): RecipeVO {
   return {
     recipeId: null,
+    creatorUserId: null,
     title: null,
     description: null,
     stepCount: null,

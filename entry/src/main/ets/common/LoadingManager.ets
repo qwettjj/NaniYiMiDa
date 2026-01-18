@@ -16,9 +16,9 @@ export class LoadingManager {
    * @param message 加载提示消息（可选）
    */
   static showLoading(message: string = '加载中...'): void {
-    this.loadingCount++;
-    
-    if (this.loadingCount === 1) {
+    LoadingManager.loadingCount++;
+
+    if (LoadingManager.loadingCount === 1) {
       // 只在第一次显示 loading
       promptAction.showToast({
         message: message,
@@ -32,11 +32,11 @@ export class LoadingManager {
    * 隐藏全局 Loading
    */
   static hideLoading(): void {
-    if (this.loadingCount > 0) {
-      this.loadingCount--;
+    if (LoadingManager.loadingCount > 0) {
+      LoadingManager.loadingCount--;
     }
 
-    if (this.loadingCount === 0) {
+    if (LoadingManager.loadingCount === 0) {
       // 所有 loading 都结束时才关闭
       // 注意：HarmonyOS Toast 没有直接的关闭 API
       // 这里只是重置计数器
@@ -49,7 +49,7 @@ export class LoadingManager {
    * 在页面销毁或导航时调用
    */
   static reset(): void {
-    this.loadingCount = 0;
+    LoadingManager.loadingCount = 0;
     console.info('[LoadingManager] Loading reset');
   }
 
@@ -63,12 +63,12 @@ export class LoadingManager {
     asyncFn: () => Promise<T>,
     loadingMessage?: string
   ): Promise<T> {
-    this.showLoading(loadingMessage);
+    LoadingManager.showLoading(loadingMessage);
     try {
       const result = await asyncFn();
       return result;
     } finally {
-      this.hideLoading();
+      LoadingManager.hideLoading();
     }
   }
 

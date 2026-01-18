@@ -320,6 +320,41 @@ export class RecipeService {
     return await HttpUtil.get<RecipeVO>(`${BASE_PATH}/${recipeId}`);
   }
 
-
+  /**
+   * 根据用户ID获取用户的食谱列表（带分页和日期筛选）
+   * GET /api/recipes/recipe/{userId}
+   * @param userId 用户ID
+   * @param pageable 分页参数（页码、大小、排序等）
+   * @param startDate 起始日期（可选，格式：yyyy-MM-dd HH:mm:ss）
+   * @returns 用户食谱列表（分页）
+   */
+  // static async getUserRecipe(
+  //   userId: number,
+  //   pageable: PageableParams,
+  //   startDate?: string
+  // ): Promise<ResultVO<Page<RecipeVO>>> {
+  //   try {
+  //     // 构建查询参数
+  //     const params: Record<string, any> = {
+  //       page: pageable.page || 0,
+  //       size: pageable.size || 10,
+  //       sort: pageable.sort || 'createTime,desc'
+  //     };
+  //
+  //     // 如果有起始日期，添加到参数中
+  //     if (startDate) {
+  //       params.startDate = startDate;
+  //     }
+  //
+  //     return await HttpUtil.get<Page<RecipeVO>>(`${BASE_PATH}/user/${userId}`, params);
+  //   } catch (error) {
+  //     console.error('RecipeService: 获取用户食谱失败', error);
+  //     return {
+  //       code: -1,
+  //       message: '获取用户食谱失败',
+  //       data: null
+  //     };
+  //   }
+  // }
 }
 

@@ -1,7 +1,3 @@
-/**
- * 用户详情页
- * 显示其他用户的个人信息、食谱和关注状态
- */
 import { router, promptAction } from '@kit.ArkUI';
 import { UserService } from '../service/UserService';
 import { RecipeService, PageResponse } from '../service/RecipeService';
@@ -21,6 +17,18 @@ struct UserDetailPage {
   private pageSize: number = 10;
   @State hasMore: boolean = true;
 
+  // 对应 profile.html 的八色体系配色方案
+  // readonly COLORS: Record<string, string> = {
+  //   // BG: '#FAF6F0',
+  //   // CARD_BG: '#F2E5D3',
+  //   // TEXT: '#602F27',
+  //   // MUTED: 'rgba(96,47,39,0.55)',
+  //   // MUTED2: 'rgba(96,47,39,0.38)',
+  //   // LINE: 'rgba(96,47,39,0.10)',
+  //   // PRIMARY: '#A85835',
+  //   // SECONDARY: '#8E422F'
+  // };
+
   async aboutToAppear(): Promise<void> {
     HttpUtil.init(getContext(this));
     const params = router.getParams() as Record<string, Object>;
@@ -30,362 +38,231 @@ struct UserDetailPage {
       await this.loadUserRecipes();
     } else {
       promptAction.showToast({ message: '参数错误' });
-      setTimeout(() => {
-        router.back();
-      }, 1000);
+      setTimeout(() => router.back(), 1000);
     }
   }
 
+  // ... (逻辑部分：loadUserInfo, checkFollowStatus, loadUserRecipes, toggleFollow 保持原样) ...
+
   /**
    * 加载用户信息
-   * 尝试从关注列表中获取用户信息，如果获取不到则创建一个简化的用户对象
    */
   async loadUserInfo(): Promise<void> {
     this.isLoading = true;
     try {
-      // 尝试从关注列表中获取用户信息
-      const followingsResult = await UserService.getMyFollowings();
-      if (followingsResult.code === 0 && followingsResult.data) {
-        const foundUser = followingsResult.data.find((user: UserVO) => user.userId === this.userId);
-        if (foundUser) {
-          this.user = foundUser;
-          this.isFollowing = true;
-          console.info('UserDetailPage: 从关注列表获取到用户信息');
-        } else {
-          // 如果不在关注列表中，创建一个简化的用户对象
-          console.info('UserDetailPage: 用户不在关注列表中，显示简化信息');
-          this.user = {
-            userId: this.userId,
-            userName: `用户${this.userId}`,
-            phoneNumber: null,
-            password: null,
-            createTime: null,
-            followerCount: 0,
-            followingCount: 0,
-            favouriteCount: 0,
-            imageUrl: null,
-            role: null,
-            nickName: `用户${this.userId}`,
-            birthday: null,
-            signature: '暂无个人简介',
-            allergens: null
-          };
-          this.isFollowing = false;
-        }
-      } else {
-        // 如果获取关注列表失败，创建默认用户对象
-        console.warn('UserDetailPage: 获取关注列表失败，使用默认用户信息');
-        this.user = {
-          userId: this.userId,
-          userName: `用户${this.userId}`,
-          phoneNumber: null,
-          password: null,
-          createTime: null,
-          followerCount: 0,
-          followingCount: 0,
-          favouriteCount: 0,
-          imageUrl: null,
-          role: null,
-          nickName: `用户${this.userId}`,
-          birthday: null,
-          signature: '暂无个人简介',
-          allergens: null
-        };
-        this.isFollowing = false;
+      const result = await UserService.getCurrentUser();
+      if (result.code === 0 && result.data) {
+        this.user = result.data;
+        await this.checkFollowStatus();
+      }else {
+        promptAction.showToast({ message: result.message || '获取用户信息失败' });
       }
     } catch (e) {
-      console.error('UserDetailPage: 加载用户信息失败', e instanceof Error ? e.message : JSON.stringify(e));
-      // 出错时也创建默认用户对象，确保页面能正常显示
-      this.user = {
-        userId: this.userId,
-        userName: `用户${this.userId}`,
-        phoneNumber: null,
-        password: null,
-        createTime: null,
-        followerCount: 0,
-        followingCount: 0,
-        favouriteCount: 0,
-        imageUrl: null,
-        role: null,
-        nickName: `用户${this.userId}`,
-        birthday: null,
-        signature: '暂无个人简介',
-        allergens: null
-      };
-      this.isFollowing = false;
+      console.error('加载失败', e);
+      promptAction.showToast({ message: '网络异常' });
     } finally {
       this.isLoading = false;
     }
   }
 
-  /**
-   * 检查是否已关注该用户
-   * 注意：此方法已整合到 loadUserInfo() 中，无需单独调用
-   */
   async checkFollowStatus(): Promise<void> {
     try {
       const result = await UserService.getMyFollowings();
       if (result.code === 0 && result.data) {
-        this.isFollowing = result.data.some((user: UserVO) => user.userId === this.userId);
+        this.isFollowing = result.data.some((u: UserVO) => u.userId === this.userId);
       }
-    } catch (e) {
-      console.warn('UserDetailPage: 检查关注状态失败', e instanceof Error ? e.message : JSON.stringify(e));
-    }
+    } catch (e) {}
   }
 
-  /**
-   * 加载用户的食谱列表
-   */
   async loadUserRecipes(isRefresh: boolean = true): Promise<void> {
-    if (isRefresh) {
-      this.currentPage = 0;
-    }
-
+    if (isRefresh) this.currentPage = 0;
     try {
-      const result = await RecipeService.getUserRecipes(
-        this.userId,
-        undefined,
-        this.currentPage,
-        this.pageSize
-      );
-
+      const result = await RecipeService.getUserRecipes(this.userId, undefined, this.currentPage, this.pageSize);
       if (result.code === 0 && result.data) {
         const pageData = result.data;
-
-        if (isRefresh) {
-          this.recipes = pageData.content;
-        } else {
-          this.recipes = [...this.recipes, ...pageData.content];
-        }
-
+        this.recipes = isRefresh ? pageData.content : [...this.recipes, ...pageData.content];
         this.hasMore = !pageData.last;
         this.currentPage = pageData.number;
-      } else {
-        console.warn('UserDetailPage: 加载食谱失败', result.message);
       }
-    } catch (e) {
-      console.error('UserDetailPage: 加载食谱异常', e instanceof Error ? e.message : JSON.stringify(e));
-    }
+    } catch (e) {}
   }
 
-  /**
-   * 切换关注状态
-   */
   async toggleFollow(): Promise<void> {
     try {
-      if (this.isFollowing) {
-        const result = await UserService.unfollowUser(this.userId);
-        if (result.code === 0) {
-          this.isFollowing = false;
-          promptAction.showToast({ message: '已取消关注' });
-          console.info('UserDetailPage: 取消关注成功');
-        } else {
-          promptAction.showToast({ message: result.message || '取消关注失败' });
-        }
-      } else {
-        const result = await UserService.followUser(this.userId);
-        if (result.code === 0) {
-          this.isFollowing = true;
-          promptAction.showToast({ message: '关注成功' });
-          console.info('UserDetailPage: 关注成功');
-        } else {
-          promptAction.showToast({ message: result.message || '关注失败' });
-        }
+      const res = this.isFollowing ? await UserService.unfollowUser(this.userId) : await UserService.followUser(this.userId);
+      if (res.code === 0) {
+        this.isFollowing = !this.isFollowing;
+        promptAction.showToast({ message: this.isFollowing ? '关注成功' : '已取消关注' });
       }
     } catch (e) {
-      console.error('UserDetailPage: 切换关注失败', e instanceof Error ? e.message : JSON.stringify(e));
       promptAction.showToast({ message: '操作失败' });
     }
   }
 
-  /**
-   * 跳转到食谱详情页
-   */
   goToRecipeDetail(recipeId: number | null): void {
-    if (recipeId === null) {
-      return;
-    }
-    router.pushUrl({
-      url: 'pages/RecipeDetailPage',
-      params: { id: recipeId }
-    }).catch((error: Error) => {
-      console.error('UserDetailPage: 跳转失败 -', error.message);
-    });
+    if (recipeId) router.pushUrl({ url: 'pages/RecipeDetailPage', params: { id: recipeId } });
   }
 
   build() {
     Column() {
-      // 顶部导航栏
+      // 1. 顶部导航 (匹配 profile.html 极简风格)
       Row() {
-        Image($r('app.media.startIcon')) // TODO: Replace with back icon
-          .width(24)
-          .height(24)
-          .onClick(() => {
-            router.back();
-          })
-        Text('用户主页')
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .margin({ left: 10 })
+        Text('⬅')
+          .fontSize(20)
+          .fontColor('#602F27')
+          .onClick(() => router.back())
+        Blank()
       }
       .width('100%')
-      .height(50)
-      .padding({ left: 15, right: 15 })
-      .backgroundColor(Color.White)
-      .alignItems(VerticalAlign.Center)
+      .height(44)
+      .padding({ left: 18, right: 18 })
 
       if (this.isLoading) {
         Column() {
-          LoadingProgress().width(50).height(50)
-          Text('加载中...').fontSize(14).fontColor('#999').margin({ top: 10 })
-        }
-        .width('100%')
-        .height('100%')
-        .justifyContent(FlexAlign.Center)
+          LoadingProgress().width(50).height(50).color('#A85835')
+        }.layoutWeight(1).justifyContent(FlexAlign.Center)
       } else if (this.user) {
         Scroll() {
           Column() {
-            // 用户信息卡片
-            Column() {
-              // 头像
-              Image(this.user.imageUrl || $r('app.media.startIcon'))
-                .width(80)
-                .height(80)
-                .borderRadius(40)
-                .margin({ top: 20 })
+            // 2. 个人信息头部 (匹配 .profile-head)
+            Row() {
+              Column() {
+                Text(this.user.nickName || this.user.userName || '未知用户')
+                  .fontSize(34)
+                  .fontWeight(900)
+                  .fontColor('#602F27')
 
-              // 昵称
-              Text(this.user.nickName || this.user.userName || '用户')
-                .fontSize(20)
-                .fontWeight(FontWeight.Bold)
-                .margin({ top: 15 })
+                Text(`生日：${this.user.birthday || '未填'}`)
+                  .fontSize(14)
+                  .fontColor('rgba(96,47,39,0.55)')
+                  .margin({ top: 6 })
 
-              // 签名
-              Text(this.user.signature || '这个人很懒，什么都没写')
-                .fontSize(14)
-                .fontColor('#666')
-                .margin({ top: 5 })
-
-              // 关注按钮
-              Button(this.isFollowing ? '已关注' : '关注')
-                .fontSize(14)
-                .height(36)
-                .backgroundColor(this.isFollowing ? '#E0E0E0' : '#1698CE')
-                .fontColor(this.isFollowing ? '#666' : Color.White)
-                .borderRadius(18)
-                .padding({ left: 30, right: 30 })
-                .margin({ top: 20, bottom: 20 })
-                .onClick(() => {
-                  this.toggleFollow();
-                })
-            }
-            .width('100%')
-            .backgroundColor(Color.White)
-            .alignItems(HorizontalAlign.Center)
-
-            Divider().color('#F0F0F0').strokeWidth(8)
-
-            // 用户食谱列表
-            Column() {
-              Text('TA的食谱')
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .margin({ top: 15, bottom: 15, left: 15 })
-                .width('100%')
-
-              if (this.recipes.length > 0) {
-                List() {
-                  ForEach(this.recipes, (recipe: RecipeVO) => {
-                    ListItem() {
-                      Row() {
-                        // 食谱封面
-                        if (recipe.imageUrls && recipe.imageUrls.length > 0) {
-                          Image(recipe.imageUrls[0])
-                            .width(100)
-                            .height(100)
-                            .objectFit(ImageFit.Cover)
-                            .borderRadius(8)
-                        } else {
-                          Column()
-                            .width(100)
-                            .height(100)
-                            .backgroundColor('#F0F0F0')
-                            .borderRadius(8)
-                        }
-
-                        // 食谱信息
-                        Column() {
-                          Text(recipe.title || '未命名食谱')
-                            .fontSize(16)
-                            .fontWeight(FontWeight.Bold)
-                            .maxLines(2)
-                            .textOverflow({ overflow: TextOverflow.Ellipsis })
-                            .width('100%')
-
-                          Text(recipe.description || '暂无描述')
-                            .fontSize(14)
-                            .fontColor('#666')
-                            .maxLines(2)
-                            .textOverflow({ overflow: TextOverflow.Ellipsis })
-                            .margin({ top: 5 })
-                            .width('100%')
-
-                          Row() {
-                            Text(`${recipe.favouriteNumber || 0} 收藏`)
-                              .fontSize(12)
-                              .fontColor('#999')
-                          }
-                          .margin({ top: 8 })
-                        }
-                        .layoutWeight(1)
-                        .margin({ left: 12 })
-                        .alignItems(HorizontalAlign.Start)
-                        .justifyContent(FlexAlign.SpaceBetween)
-                      }
-                      .width('100%')
-                      .padding(15)
-                      .backgroundColor(Color.White)
-                      .onClick(() => {
-                        this.goToRecipeDetail(recipe.recipeId);
-                      })
-                    }
-                  }, (recipe: RecipeVO, index: number) => `${recipe.recipeId}_${index}`)
-                }
-                .width('100%')
-                .divider({ strokeWidth: 1, color: '#F0F0F0' })
-              } else {
-                Column() {
-                  Text('暂无食谱')
-                    .fontSize(14)
-                    .fontColor('#999')
-                    .margin({ top: 40, bottom: 40 })
-                }
-                .width('100%')
-                .alignItems(HorizontalAlign.Center)
-                .backgroundColor(Color.White)
+                Text('过敏原信息：无')
+                  .fontSize(14)
+                  .fontColor('rgba(96,47,39,0.55)')
+                  .margin({ top: 2 })
               }
+              .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
+
+              Column() {
+                Image(this.user.imageUrl || $r('app.media.startIcon'))
+                  .width(76)
+                  .height(76)
+                  .borderRadius(22)
+                  .border({ width: 1, color: 'rgba(96,47,39,0.10)' })
+
+                Button(this.isFollowing ? '已关注' : '关注')
+                  .fontSize(12)
+                  .fontWeight(700)
+                  .height(28)
+                  .fontColor(this.isFollowing ? 'rgba(96,47,39,0.55)' : '#8E422F')
+                  .backgroundColor('rgba(250,246,240,0.8)')
+                  .border({ width: 1, color: 'rgba(96,47,39,0.10)' })
+                  .borderRadius(999)
+                  .margin({ top: 10 })
+                  .onClick(() => this.toggleFollow())
+              }
+              .alignItems(HorizontalAlign.Center)
             }
             .width('100%')
-            .backgroundColor(Color.White)
+            .padding({ top: 10 })
+
+            // 3. 会员卡片 (匹配 .member-card)
+            Row() {
+              Text('开通何异味会员')
+                .fontWeight(900)
+                .fontColor('#602F27')
+              Text('最低 0.3元/天')
+                .fontSize(13)
+                .fontWeight(800)
+                .fontColor('#8E422F')
+                .backgroundColor('rgba(250,246,240,0.8)')
+                .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                .borderRadius(999)
+            }
+            .width('100%')
+            .margin({ top: 18 })
+            .padding(14)
+            .backgroundColor('#F2E5D3')
+            .borderRadius(22)
+            .border({ width: 1, color: 'rgba(96,47,39,0.10)' })
+            .justifyContent(FlexAlign.SpaceBetween)
+
+            // 4. Tab 栏
+            Column() {
+              Text(`我的发布 ${this.recipes.length}`)
+                .fontSize(16)
+                .fontWeight(900)
+                .fontColor('#602F27')
+              Divider()
+                .width(20)
+                .strokeWidth(3)
+                .color('#602F27')
+                .margin({ top: 6 })
+            }
+            .margin({ top: 25, bottom: 15 })
+
+            // 5. 列表内容
+            if (this.recipes.length > 0) {
+              List({ space: 12 }) {
+                ForEach(this.recipes, (recipe: RecipeVO) => {
+                  ListItem() {
+                    Row() {
+                      Image(recipe.imageUrls?.[0] || $r('app.media.startIcon'))
+                        .width(80)
+                        .height(80)
+                        .borderRadius(16)
+                        .objectFit(ImageFit.Cover)
+
+                      Column() {
+                        Text(recipe.title || '未命名食谱')
+                          .fontSize(16)
+                          .fontWeight(900)
+                          .fontColor('#602F27')
+                        Text(recipe.description || '这个厨师很懒，没写描述')
+                          .fontSize(13)
+                          .fontColor('rgba(96,47,39,0.55)')
+                          .margin({ top: 4 })
+                          .maxLines(2)
+                      }
+                      .layoutWeight(1)
+                      .margin({ left: 12 })
+                      .alignItems(HorizontalAlign.Start)
+                    }
+                    .width('100%')
+                    .padding(12)
+                    .backgroundColor('#F2E5D3')
+                    .borderRadius(20)
+                    .onClick(() => this.goToRecipeDetail(recipe.recipeId))
+                  }
+                })
+              }
+              .width('100%')
+            } else {
+              // 空状态 (匹配 .empty)
+              Column() {
+                Text('创建菜谱的人是厨房里的天使')
+                  .fontSize(18)
+                  .fontWeight(900)
+                  .fontColor('#602F27')
+                Text('开始创建第一道菜谱')
+                  .fontSize(18)
+                  .fontWeight(900)
+                  .fontColor('#A85835')
+                  .margin({ top: 18 })
+              }
+              .width('100%')
+              .margin({ top: 64 })
+            }
           }
+          .padding({ left: 18, right: 18, bottom: 40 })
         }
         .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-      } else {
-        // 错误状态
-        Column() {
-          Text('未找到用户信息').fontSize(16).fontColor('#999')
-          Button('返回')
-            .margin({ top: 20 })
-            .onClick(() => router.back())
-        }
-        .width('100%')
-        .height('100%')
-        .justifyContent(FlexAlign.Center)
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5')
+    .backgroundColor('#FAF6F0')
   }
 }

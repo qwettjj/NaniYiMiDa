@@ -8,7 +8,6 @@
  */
 export class AppColors {
   // 主色调 - 美食橙
-  static readonly PRIMARY = '#FF6B35';
   static readonly PRIMARY_LIGHT = '#FF8C5A';
   static readonly PRIMARY_DARK = '#E54D1F';
   
@@ -16,16 +15,11 @@ export class AppColors {
   static readonly ACCENT = '#4ECDC4';
   static readonly ACCENT_LIGHT = '#6FE0D7';
   static readonly ACCENT_DARK = '#3CB8AF';
-  
+
   // 背景色
-  static readonly BG_PRIMARY = '#FFFFFF';
-  static readonly BG_SECONDARY = '#F8F9FA';
   static readonly BG_TERTIARY = '#F5F5F5';
-  
+
   // 文字颜色
-  static readonly TEXT_PRIMARY = '#212529';
-  static readonly TEXT_SECONDARY = '#6C757D';
-  static readonly TEXT_TERTIARY = '#ADB5BD';
   static readonly TEXT_INVERSE = '#FFFFFF';
   
   // 边框颜色
@@ -43,6 +37,37 @@ export class AppColors {
   static readonly SHADOW_LIGHT = 'rgba(0, 0, 0, 0.05)';
   static readonly SHADOW_MEDIUM = 'rgba(0, 0, 0, 0.1)';
   static readonly SHADOW_DARK = 'rgba(0, 0, 0, 0.15)';
+
+  static readonly BG_PRIMARY = '#E3C7A4';        // 主背景色
+  static readonly BG_SECONDARY = '#FAF6F0';     // 顶部栏和底部栏背景色（对应 .bottom-nav 的 background）
+  static readonly TEXT_PRIMARY = '#602F27';     // 主要字体颜色
+  static readonly TEXT_SECONDARY = '#8E8E93';   // 次要字体颜色
+  static readonly PRIMARY_ACCENT = '#8E422F';   // 按钮橙色/主色调
+
+  // 原有颜色（如果还有其他颜色）
+  static readonly PRIMARY = '#8E422F';          // 与 PRIMARY_ACCENT 相同
+  static readonly TEXT_TERTIARY = '#8E8E93';    // 与 TEXT_SECONDARY 相同
+  static readonly WHITE = '#FFFFFF';
+  static readonly BLACK = '#000000';
+  static readonly C10 = '#FAF6F0';
+  static readonly C20 = '#F2E5D3';
+  static readonly C30 = '#E3C7A4';
+  static readonly C40 = '#D5A874';
+  static readonly C50 = '#CB8E54';
+  static readonly C60 = '#C07240';
+  static readonly C70 = '#A85835';
+  static readonly C80 = '#8E422F';
+  static readonly C90 = '#74362C';
+  static readonly C100 = '#602F27';
+  // 透明度辅助颜色
+  static getPrimaryWithAlpha(alpha: number): string {
+    // 将 HEX 颜色转换为 RGBA
+    const hex = AppColors.PRIMARY_ACCENT; // 直接使用类名访问静态属性
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
 }
 
 /**

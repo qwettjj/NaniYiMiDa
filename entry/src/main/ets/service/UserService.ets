@@ -107,6 +107,11 @@ export class UserService {
     return await HttpUtil.get<UserVO>(url);
   }
 
+  static async findByUserId(userId: number): Promise<ResultVO<UserVO>>{
+    const url = `${BASE_PATH}/search/${userId}`;
+    return await HttpUtil.get<UserVO>(url);
+  }
+
   /**
    * 退出登录
    * 清除本地存储的 Token

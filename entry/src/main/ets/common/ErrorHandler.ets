@@ -19,24 +19,32 @@ export enum ErrorType {
   UNKNOWN = 'UNKNOWN'
 }
 
+// 定义可接受的错误类型
+interface GeneratedTypeLiteralInterface_1 {
+  code?: number;
+  message?: string;
+}
+
+type AcceptableError = Error | BusinessError | GeneratedTypeLiteralInterface_1;
+
 /**
  * 错误处理器类
  */
 export class ErrorHandler {
-  
+
   /**
    * 处理错误并显示 Toast 提示
    * @param error 错误对象
    * @param customMessage 自定义错误消息（可选）
    */
-  static handleError(error: BusinessError | Error | unknown, customMessage?: string): void {
+  static handleError(error: AcceptableError, customMessage?: string): void {
     let message: string;
     let errorType: ErrorType = ErrorType.UNKNOWN;
 
     if (error instanceof Error) {
       // 标准 Error 对象
       message = error.message;
-      
+
       // 根据错误消息判断类型
       if (message.includes('network') || message.includes('connect') || message.includes('timeout')) {
         errorType = ErrorType.NETWORK;
@@ -47,17 +55,14 @@ export class ErrorHandler {
       } else {
         message = customMessage || message || '操作失败，请重试';
       }
-    } else if (typeof error === 'object' && error !== null) {
+    } else {
       // BusinessError 或其他对象
-      const businessError = error as BusinessError;
-      if (businessError.code !== undefined) {
+      if (error.code !== undefined) {
         errorType = ErrorType.BUSINESS;
-        message = customMessage || businessError.message || `错误代码: ${businessError.code}`;
+        message = customMessage || error.message || `错误代码: ${error.code}`;
       } else {
         message = customMessage || JSON.stringify(error);
       }
-    } else {
-      message = customMessage || '未知错误';
     }
 
     console.error(`[ErrorHandler] Type: ${errorType}, Message: ${message}`);
@@ -73,8 +78,16 @@ export class ErrorHandler {
    * 处理网络错误
    * @param error 错误对象
    */
-  static handleNetworkError(error: unknown): void {
-    this.handleError(error, '网络请求失败，请检查网络连接');
+  static handleNetworkError(error: AcceptableError): void {
+    ErrorHandler.handleError(error, '网络请求失败，请检查网络连接');
+  }
+
+  /**
+   * 处理字符串类型的网络错误
+   * @param errorMessage 错误消息字符串
+   */
+  static handleNetworkErrorString(errorMessage: string): void {
+    ErrorHandler.handleError(new Error(errorMessage), '网络请求失败，请检查网络连接');
   }
 
   /**
@@ -84,7 +97,7 @@ export class ErrorHandler {
    */
   static handleBusinessError(code: number, message: string | null): void {
     const errorMessage = message || `业务错误 (${code})`;
-    
+
     // 根据常见错误码提供友好提示
     let friendlyMessage: string;
     switch (code) {
@@ -108,7 +121,7 @@ export class ErrorHandler {
     }
 
     console.warn(`[ErrorHandler] Business Error: ${code} - ${friendlyMessage}`);
-    
+
     promptAction.showToast({
       message: friendlyMessage,
       duration: 2000
@@ -120,10 +133,22 @@ export class ErrorHandler {
    * @param permissionName 权限名称
    */
   static handlePermissionError(permissionName?: string): void {
-    const message = permissionName 
+    const message = permissionName
       ? `需要 ${permissionName} 权限，请在设置中开启`
       : '权限不足，请检查应用权限设置';
-    
-    this.handleError(new Error('Permission denied'), message);
+
+    ErrorHandler.handleError(new Error('Permission denied'), message);
+  }
+
+  /**
+   * 处理通用错误（适配多种输入类型）
+   * @param error 可以是字符串、Error对象或业务错误对象
+   */
+  static handleGenericError(error: string | AcceptableError): void {
+    if (typeof error === 'string') {
+      ErrorHandler.handleError(new Error(error));
+    } else {
+      ErrorHandler.handleError(error);
+    }
   }
 }

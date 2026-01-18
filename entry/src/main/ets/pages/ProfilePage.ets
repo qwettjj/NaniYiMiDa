@@ -1,16 +1,43 @@
 import { UserService } from '../service/UserService';
+import { RecipeService } from '../service/RecipeService';
 import { UserVO } from '../model/UserModel';
+import { RecipeVO } from '../model/RecipeModel';
 import router from '@ohos.router';
 import { HttpUtil } from '../service/HttpUtil';
-import { AppColors, AppFonts, AppSpacing, AppRadius } from '../common/theme';
+import { promptAction } from '@kit.ArkUI';
+
+interface MyColors {
+  BG: string;
+  TEXT: string;
+  MUTED: string;
+  LINE: string;
+  CARD_BG: string;
+  PRIMARY: string;
+  SECONDARY: string;
+}
 
 @Component
 export struct ProfilePage {
   @State currentUser: UserVO | null = null;
   @State isLogin: boolean = false;
+  @State drafts: RecipeVO[] = []; // 存储草稿列表
+  @State isLoadingDrafts: boolean = false;
+
+  readonly C: MyColors = {
+    BG: '#FAF6F0',
+    CARD_BG: '#F2E5D3',
+    TEXT: '#602F27',
+    MUTED: 'rgba(96,47,39,0.55)',
+    LINE: 'rgba(96,47,39,0.10)',
+    PRIMARY: '#CB8E54',
+    SECONDARY: '#8E422F'
+  };
 
   async aboutToAppear() {
     await this.checkLoginStatus();
+    if (this.isLogin) {
+      this.loadDrafts(); // 登录后自动加载草稿
+    }
   }
 
   async checkLoginStatus() {
@@ -20,13 +47,48 @@ export struct ProfilePage {
       if (result.code === 0 && result.data) {
         this.currentUser = result.data;
         this.isLogin = true;
-      } else {
-        this.isLogin = false;
-        this.currentUser = null;
       }
-    } else {
-      this.isLogin = false;
-      this.currentUser = null;
+    }
+  }
+
+  /**
+   * 获取草稿数据
+   */
+  async loadDrafts() {
+    this.isLoadingDrafts = true;
+    try {
+      const result = await RecipeService.getCurrentUserDrafts();
+      if (result.code === 0 && result.data) {
+        this.drafts = result.data;
+      }
+    } catch (e) {
+      console.error('加载草稿失败', e);
+    } finally {
+      this.isLoadingDrafts = false;
+    }
+  }
+
+  /**
+   * 删除草稿逻辑
+   */
+  async deleteDraft(recipeId: number): Promise<void> {
+    try {
+      // 1. 调用删除接口
+      const result = await RecipeService.deleteRecipe(recipeId);
+
+      if (result.code === 0) {
+        await this.loadDrafts();
+        promptAction.showToast({ message: '草稿已删除' });
+
+
+        // 方案 B：如果不想重新请求网络，也可以手动从本地数组中滤除（性能更高）
+        // this.drafts = this.drafts.filter(item => item.recipeId !== recipeId);
+      } else {
+        promptAction.showToast({ message: result.message || '删除失败' });
+      }
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : '删除失败';
+      promptAction.showToast({ message: errorMsg });
     }
   }
 
@@ -40,328 +102,140 @@ export struct ProfilePage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(AppColors.BG_SECONDARY)
+    .backgroundColor(this.C.BG)
   }
 
   @Builder
   LoginView() {
     Scroll() {
-      Column({ space: AppSpacing.LG }) {
-        // 顶部用户信息卡片（带渐变背景）
-        Column() {
-          // 头像和基本信息
-          Column({ space: AppSpacing.MD }) {
-            // 头像（带边框和阴影）
-            Stack() {
-              Image(this.currentUser && this.currentUser.imageUrl ? this.currentUser.imageUrl : $r('app.media.startIcon'))
-                .width(100)
-                .height(100)
-                .borderRadius(AppRadius.ROUND)
-                .objectFit(ImageFit.Cover)
-              
-              // 头像边框
-              Circle()
-                .width(100)
-                .height(100)
-                .fill('transparent')
-                .stroke(AppColors.BG_PRIMARY)
-                .strokeWidth(4)
-            }
-            .shadow({
-              radius: 16,
-              color: AppColors.SHADOW_DARK,
-              offsetY: 4
-            })
-
-            // 昵称
-            Text(this.currentUser ? (this.currentUser.nickName || this.currentUser.userName || '用户') : '用户')
-              .fontSize(AppFonts.HEADING_2)
-              .fontWeight(AppFonts.WEIGHT_BOLD)
-              .fontColor(AppColors.TEXT_INVERSE)
-
-            // 签名
-            Text(this.currentUser ? (this.currentUser.signature || '这个人很懒，还没有签名~') : '这个人很懒，还没有签名~')
-              .fontSize(AppFonts.BODY)
-              .fontColor(`${AppColors.TEXT_INVERSE}CC`)
-              .maxLines(2)
-              .textAlign(TextAlign.Center)
+      Column() {
+        // --- 头部信息 ---
+        Row() {
+          Column() {
+            Text(this.currentUser?.nickName || this.currentUser?.userName || '未知用户')
+              .fontSize(32).fontWeight(900).fontColor(this.C.TEXT)
+            Text(`生日：${this.currentUser?.birthday || '未设置'}`)
+              .fontSize(14).fontColor(this.C.MUTED).margin({ top: 8 })
           }
-          .width('100%')
-          .padding({ top: AppSpacing.XXXL, bottom: AppSpacing.XXL })
+          .alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+          Image(this.currentUser?.imageUrl || $r('app.media.startIcon'))
+            .width(76).height(76).borderRadius(22)
+            .border({ width: 1, color: this.C.LINE })
         }
-        .width('100%')
-        .linearGradient({
-          angle: 135,
-          colors: [
-            [AppColors.PRIMARY_LIGHT, 0.0],
-            [AppColors.PRIMARY, 1.0]
-          ]
-        })
-        .borderRadius({ bottomLeft: AppRadius.XXL, bottomRight: AppRadius.XXL })
+        .width('100%').padding({ top: 40, bottom: 20 })
 
-        // 统计卡片
-        Row({ space: AppSpacing.MD }) {
-          Column({ space: AppSpacing.SM }) {
-            Text('👥')
-              .fontSize(AppFonts.HEADING_3)
+        // --- 会员卡片 ---
+        Row() {
+          Text('开通何异味会员').fontWeight(900).fontColor(this.C.TEXT)
+          Text('最低 0.3元/天').fontSize(13).fontWeight(800).fontColor(this.C.SECONDARY)
+            .backgroundColor('rgba(255,255,255,0.6)').padding({ left: 12, right: 12, top: 8, bottom: 8 }).borderRadius(999)
+        }
+        .width('100%').padding(16).backgroundColor(this.C.CARD_BG).borderRadius(22).margin({ bottom: 25 })
 
-            Text(this.currentUser ? (this.currentUser.followingCount ?? 0).toString() : '0')
-              .fontSize(AppFonts.HEADING_3)
-              .fontWeight(AppFonts.WEIGHT_BOLD)
-              .fontColor(AppColors.TEXT_PRIMARY)
-
-            Text('关注')
-              .fontSize(AppFonts.BODY_SMALL)
-              .fontColor(AppColors.TEXT_SECONDARY)
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .padding(AppSpacing.LG)
-          .backgroundColor(AppColors.BG_PRIMARY)
-          .borderRadius(AppRadius.XL)
-          .shadow({
-            radius: 12,
-            color: AppColors.SHADOW_MEDIUM,
-            offsetY: 2
-          })
-          .onClick(() => {
+        // --- 统计项（点击关注跳转） ---
+        Row() {
+          this.StatItem('关注', this.currentUser?.followingCount?.toString() || '0', () => {
             router.pushUrl({ url: 'pages/FollowingPage' });
           })
-
-          Column({ space: AppSpacing.SM }) {
-            Text('⭐')
-              .fontSize(AppFonts.HEADING_3)
-
-            Text(this.currentUser ? (this.currentUser.followerCount ?? 0).toString() : '0')
-              .fontSize(AppFonts.HEADING_3)
-              .fontWeight(AppFonts.WEIGHT_BOLD)
-              .fontColor(AppColors.TEXT_PRIMARY)
-
-            Text('粉丝')
-              .fontSize(AppFonts.BODY_SMALL)
-              .fontColor(AppColors.TEXT_SECONDARY)
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .padding(AppSpacing.LG)
-          .backgroundColor(AppColors.BG_PRIMARY)
-          .borderRadius(AppRadius.XL)
-          .shadow({
-            radius: 12,
-            color: AppColors.SHADOW_MEDIUM,
-            offsetY: 2
-          })
-          .onClick(() => {
-            console.info('粉丝列表功能待开发');
-          })
-
-          Column({ space: AppSpacing.SM }) {
-            Text('❤️')
-              .fontSize(AppFonts.HEADING_3)
-
-            Text(this.currentUser ? (this.currentUser.favouriteCount ?? 0).toString() : '0')
-              .fontSize(AppFonts.HEADING_3)
-              .fontWeight(AppFonts.WEIGHT_BOLD)
-              .fontColor(AppColors.TEXT_PRIMARY)
-
-            Text('收藏')
-              .fontSize(AppFonts.BODY_SMALL)
-              .fontColor(AppColors.TEXT_SECONDARY)
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .padding(AppSpacing.LG)
-          .backgroundColor(AppColors.BG_PRIMARY)
-          .borderRadius(AppRadius.XL)
-          .shadow({
-            radius: 12,
-            color: AppColors.SHADOW_MEDIUM,
-            offsetY: 2
-          })
-          .onClick(() => {
+          this.StatItem('粉丝', this.currentUser?.followerCount?.toString() || '0', () => {})
+          this.StatItem('收藏', this.currentUser?.favouriteCount?.toString() || '0', () => {
             router.pushUrl({ url: 'pages/FavoritesPage' });
           })
         }
-        .width('100%')
-        .padding({ left: AppSpacing.LG, right: AppSpacing.LG })
-        .margin({ top: -AppSpacing.XXL })
+        .width('100%').margin({ bottom: 30 })
 
-        // 个人信息卡片
-        Column({ space: 0 }) {
-          this.InfoItem('🎂 生日', this.currentUser ? (this.currentUser.birthday || '未设置') : '未设置', true)
-          this.InfoItem('🚫 过敏原', this.currentUser ? (this.currentUser.allergens || '无') : '无', false)
+        // --- 我的草稿区域 ---
+        Column() {
+          Row() {
+            Text('我的草稿')
+              .fontSize(18).fontWeight(900).fontColor(this.C.TEXT)
+            Blank()
+            if (this.isLoadingDrafts) {
+              LoadingProgress().width(20).height(20).color(this.C.PRIMARY)
+            }
+          }.width('100%').margin({ bottom: 15 })
+
+          if (this.drafts.length > 0) {
+            // 草稿列表展示
+            List({ space: 12 }) {
+              ForEach(this.drafts, (item: RecipeVO) => {
+                ListItem() {
+                  Row() {
+                    Image(item.imageUrls?.[0] || $r('app.media.startIcon'))
+                      .width(80).height(80).borderRadius(16).objectFit(ImageFit.Cover)
+
+                    Column() {
+                      Text(item.title || '未命名草稿')
+                        .fontSize(16).fontWeight(900).fontColor(this.C.TEXT).maxLines(1)
+                      Text(item.description || '暂无描述')
+                        .fontSize(13).fontColor(this.C.MUTED).margin({ top: 4 }).maxLines(1)
+
+                      Row({ space: 10 }) {
+                        Text('编辑').fontSize(12).fontColor(this.C.PRIMARY).fontWeight(700)
+                          .onClick(() => {
+                            // 跳转编辑页逻辑
+                            promptAction.showToast({ message: '编辑功能待对接' });
+                          })
+                        Text('删除').fontSize(12).fontColor(this.C.SECONDARY).fontWeight(700)
+                          .onClick(() => this.deleteDraft(item.recipeId!))
+                      }.margin({ top: 8 })
+                    }
+                    .layoutWeight(1).margin({ left: 12 }).alignItems(HorizontalAlign.Start)
+                  }
+                  .padding(12).backgroundColor(this.C.CARD_BG).borderRadius(20).width('100%')
+                }
+              })
+            }.width('100%')
+          } else {
+            // 空状态
+            Column() {
+              Text('暂无草稿食谱').fontSize(16).fontWeight(900).fontColor(this.C.TEXT)
+              Text('去发布页面创作你的第一道菜吧').fontSize(14).fontColor(this.C.MUTED).margin({ top: 8 })
+            }.width('100%').margin({ top: 40 })
+          }
         }
-        .width('100%')
-        .backgroundColor(AppColors.BG_PRIMARY)
-        .borderRadius(AppRadius.XL)
-        .margin({ left: AppSpacing.LG, right: AppSpacing.LG })
-        .shadow({
-          radius: 12,
-          color: AppColors.SHADOW_MEDIUM,
-          offsetY: 2
-        })
 
-        // 功能按钮区
-        Column({ space: AppSpacing.MD }) {
-          // 编辑个人信息按钮
-          Row({ space: AppSpacing.MD }) {
-            Text('✏️ 编辑个人信息')
-              .fontSize(AppFonts.BODY_LARGE)
-              .fontColor(AppColors.TEXT_INVERSE)
-              .fontWeight(AppFonts.WEIGHT_MEDIUM)
-          }
-          .width('100%')
-          .height(52)
-          .justifyContent(FlexAlign.Center)
-          .backgroundColor(AppColors.PRIMARY)
-          .borderRadius(AppRadius.LG)
-          .shadow({
-            radius: 8,
-            color: `${AppColors.PRIMARY}40`,
-            offsetY: 2
-          })
-          .onClick(() => {
-            router.pushUrl({ url: 'pages/ProfileEditPage' });
-          })
-          
-          // 我的草稿按钮
-          Row({ space: AppSpacing.MD }) {
-            Text('📝 我的草稿')
-              .fontSize(AppFonts.BODY_LARGE)
-              .fontColor(AppColors.TEXT_INVERSE)
-              .fontWeight(AppFonts.WEIGHT_MEDIUM)
-          }
-          .width('100%')
-          .height(52)
-          .justifyContent(FlexAlign.Center)
-          .backgroundColor(AppColors.ACCENT)
-          .borderRadius(AppRadius.LG)
-          .shadow({
-            radius: 8,
-            color: `${AppColors.ACCENT}40`,
-            offsetY: 2
-          })
-          .onClick(() => {
-            router.pushUrl({ url: 'pages/DraftPage' });
-          })
-          
-          // 浏览历史按钮
-          Row({ space: AppSpacing.MD }) {
-            Text('🕐 浏览历史')
-              .fontSize(AppFonts.BODY_LARGE)
-              .fontColor(AppColors.TEXT_INVERSE)
-              .fontWeight(AppFonts.WEIGHT_MEDIUM)
-          }
-          .width('100%')
-          .height(52)
-          .justifyContent(FlexAlign.Center)
-          .backgroundColor(AppColors.INFO)
-          .borderRadius(AppRadius.LG)
-          .shadow({
-            radius: 8,
-            color: `${AppColors.INFO}40`,
-            offsetY: 2
-          })
-          .onClick(() => {
-            router.pushUrl({ url: 'pages/HistoryPage' });
-          })
-          
-          // 退出登录按钮
-          Row({ space: AppSpacing.MD }) {
-            Text('🚪 退出登录')
-              .fontSize(AppFonts.BODY_LARGE)
-              .fontColor(AppColors.TEXT_INVERSE)
-              .fontWeight(AppFonts.WEIGHT_MEDIUM)
-          }
-          .width('100%')
-          .height(52)
-          .justifyContent(FlexAlign.Center)
-          .backgroundColor(AppColors.ERROR)
-          .borderRadius(AppRadius.LG)
-          .shadow({
-            radius: 8,
-            color: `${AppColors.ERROR}40`,
-            offsetY: 2
-          })
+        // 退出登录
+        Text('退出登录')
+          .fontSize(14).fontColor(this.C.MUTED).margin({ top: 60, bottom: 40 })
           .onClick(async () => {
             await HttpUtil.clearToken();
             this.isLogin = false;
-            this.currentUser = null;
             router.replaceUrl({ url: 'pages/LoginPage' });
           })
-        }
-        .width('100%')
-        .padding({ left: AppSpacing.LG, right: AppSpacing.LG, bottom: AppSpacing.XXL })
       }
+      .padding({ left: 20, right: 20 })
     }
-    .width('100%')
-    .height('100%')
     .scrollBar(BarState.Off)
   }
 
   @Builder
-  UnLoginView() {
-    Column({ space: AppSpacing.XXL }) {
-      // 图标
-      Text('👤')
-        .fontSize(80)
-
-      // 提示文字
-      Column({ space: AppSpacing.SM }) {
-        Text('您尚未登录')
-          .fontSize(AppFonts.HEADING_2)
-          .fontColor(AppColors.TEXT_PRIMARY)
-          .fontWeight(AppFonts.WEIGHT_BOLD)
-
-        Text('登录后可查看个人信息和收藏')
-          .fontSize(AppFonts.BODY)
-          .fontColor(AppColors.TEXT_SECONDARY)
-      }
-
-      // 登录按钮
-      Button('立即登录')
-        .width(200)
-        .height(48)
-        .fontSize(AppFonts.BODY_LARGE)
-        .fontColor(AppColors.TEXT_INVERSE)
-        .backgroundColor(AppColors.PRIMARY)
-        .borderRadius(AppRadius.XXL)
-        .shadow({
-          radius: 8,
-          color: `${AppColors.PRIMARY}50`,
-          offsetY: 4
-        })
-        .onClick(() => {
-          router.pushUrl({ url: 'pages/LoginPage' });
-        })
+  StatItem(label: string, value: string, callback: () => void) {
+    Column() {
+      Text(value).fontSize(20).fontWeight(900).fontColor(this.C.TEXT)
+      Text(label).fontSize(12).fontColor(this.C.MUTED).margin({ top: 4 })
     }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
+    .layoutWeight(1)
+    .onClick(callback)
   }
 
-  /**
-   * 信息项组件
-   */
   @Builder
-  InfoItem(label: string, value: string, showDivider: boolean) {
-    Row() {
-      Text(label)
-        .fontSize(AppFonts.BODY_LARGE)
-        .fontColor(AppColors.TEXT_PRIMARY)
-
-      Blank()
-
-      Text(value)
-        .fontSize(AppFonts.BODY)
-        .fontColor(AppColors.TEXT_SECONDARY)
+  UnLoginView() {
+    Column() {
+      Image($r('app.media.unlog'))           // 使用和HTML相同的图片路径
+        .width(155)                       // HTML中图片宽度185px
+        .height(155)                      // 保持宽高一致
+        .objectFit(ImageFit.Cover)        // 覆盖填充
+        .borderRadius(16)                 // HTML中border-radius: 16px
+        .opacity(0.95)
+      Text('加入何异味厨房').fontSize(22).fontWeight(900).fontColor(this.C.TEXT)
+      Button('立即登录 / 注册')
+        .width('100%').height(54).margin({ top: 30 })
+        .fontSize(16).fontWeight(900).fontColor('#FAF6F0')
+        .backgroundColor(this.C.SECONDARY).borderRadius(18)
+        .onClick(() => router.pushUrl({ url: 'pages/LoginPage' }))
     }
-    .width('100%')
-    .height(56)
-    .padding({ left: AppSpacing.LG, right: AppSpacing.LG })
-    .border({
-      width: { bottom: showDivider ? 1 : 0 },
-      color: AppColors.BORDER_LIGHT
-    })
+    .width('100%').height('100%').padding(40).justifyContent(FlexAlign.Center)
   }
 }

@@ -7,6 +7,7 @@ import { promptAction } from '@kit.ArkUI';
 import { UserService } from '../service/UserService';
 import { HttpUtil, ResultVO } from '../service/HttpUtil';
 import { UserVO } from '../model/UserModel';
+import { AppColors } from '../common';
 
 @Entry
 @Component
@@ -21,6 +22,14 @@ struct RegisterPage {
   @State confirmPassword: string = '';
   /** 是否正在注册 */
   @State isLoading: boolean = false;
+
+  // 新增状态用于Logo切换
+  @State showPasswordLogo: boolean = false;
+  @State isPasswordFocused: boolean = false;
+  @State isConfirmPasswordFocused: boolean = false;
+  @State showPassword: boolean = false;
+  @State showConfirmPassword: boolean = false;
+  @State lastActivePasswordField: number = 0; // 0=无, 1=密码, 2=确认密码
 
   aboutToAppear() {
     // 确保 HttpUtil 已初始化
@@ -106,6 +115,14 @@ struct RegisterPage {
     }
 
     return true;
+  }
+
+  private updateLogoState(): void {
+    // 如果任意一个密码框有焦点或内容，显示密码Logo
+    const hasPasswordFocus = this.isPasswordFocused || this.isConfirmPasswordFocused;
+    const hasPasswordContent = this.password.length > 0 || this.confirmPassword.length > 0;
+
+    this.showPasswordLogo = hasPasswordFocus || hasPasswordContent;
   }
 
   /**
@@ -198,194 +215,364 @@ struct RegisterPage {
   }
 
   build() {
-    Column() {
-      // 顶部返回按钮
-      Row() {
-        Text('←')
-          .fontSize(24)
-          .fontColor('#333333')
-          .onClick(() => {
-            this.goToLogin();
-          })
-
-        Blank()
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-
-      // 标题区域
-      Column() {
-        Text('创建账号')
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
-          .margin({ bottom: 8 })
-
-        Text('加入 NaniYiMiDa 社区')
-          .fontSize(14)
-          .fontColor('#999999')
-          .margin({ bottom: 32 })
-      }
-      .width('100%')
-      .alignItems(HorizontalAlign.Start)
-      .padding({ left: 24, right: 24 })
-
-      // 表单区域
-      Column() {
-        // 用户名输入框
-        Column() {
-          Text('用户名')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ bottom: 8 })
-
-          TextInput({ placeholder: '请输入用户名', text: this.userName })
-            .type(InputType.Normal)
-            .width('100%')
-            .height(50)
-            .fontSize(16)
-            .placeholderColor('#CCCCCC')
-            .backgroundColor('#F5F5F5')
-            .borderRadius(8)
-            .padding({ left: 16, right: 16 })
-            .onChange((value: string) => {
-              this.userName = value;
-            })
-        }
+    Stack() {
+      // 渐变背景
+      Column()
         .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 20 })
+        .height('100%')
+        .backgroundImage(
+          `linear-gradient(180deg, ${AppColors.C10} 0%, ${AppColors.C20} 100%)`
+        )
 
-        // 手机号输入框
+      Scroll() {
         Column() {
-          Text('手机号')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ bottom: 8 })
-
-          TextInput({ placeholder: '请输入手机号', text: this.phoneNumber })
-            .type(InputType.PhoneNumber)
-            .width('100%')
-            .height(50)
-            .fontSize(16)
-            .placeholderColor('#CCCCCC')
-            .backgroundColor('#F5F5F5')
-            .borderRadius(8)
-            .padding({ left: 16, right: 16 })
-            .onChange((value: string) => {
-              this.phoneNumber = value;
+          // 顶部返回按钮
+          Row() {
+            Button({ type: ButtonType.Normal, stateEffect: true }) {
+              Text('←')
+                .fontSize(18)
+            }
+            .width(36)
+            .height(36)
+            .backgroundColor('rgba(250, 246, 240, 0.85)')
+            .border({
+              width: 1,
+              color: 'rgba(96, 47, 39, 0.10)'
             })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 20 })
-
-        // 密码输入框
-        Column() {
-          Text('密码')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ bottom: 8 })
-
-          TextInput({ placeholder: '请输入密码（6-20位）', text: this.password })
-            .type(InputType.Password)
-            .width('100%')
-            .height(50)
-            .fontSize(16)
-            .placeholderColor('#CCCCCC')
-            .backgroundColor('#F5F5F5')
-            .borderRadius(8)
-            .padding({ left: 16, right: 16 })
-            .onChange((value: string) => {
-              this.password = value;
+            .borderRadius(12)
+            .onClick(() => {
+              this.goToLogin();
             })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 20 })
 
-        // 确认密码输入框
-        Column() {
-          Text('确认密码')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ bottom: 8 })
-
-          TextInput({ placeholder: '请再次输入密码', text: this.confirmPassword })
-            .type(InputType.Password)
-            .width('100%')
-            .height(50)
-            .fontSize(16)
-            .placeholderColor('#CCCCCC')
-            .backgroundColor('#F5F5F5')
-            .borderRadius(8)
-            .padding({ left: 16, right: 16 })
-            .onChange((value: string) => {
-              this.confirmPassword = value;
-            })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 32 })
-
-        // 注册按钮
-        Button(this.isLoading ? '注册中...' : '注册')
+            Blank()
+          }
           .width('100%')
-          .height(50)
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .backgroundColor(this.isLoading ? '#CCCCCC' : '#FF6B35')
-          .borderRadius(25)
-          .enabled(!this.isLoading)
-          .onClick(() => {
-            this.handleRegister();
-          })
+          .padding({ top: 6, bottom: 8 })
+
+          // 标题区域和Logo并排
+          Row() {
+            Column() {
+              Text('创建账号')
+                .fontSize(30)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('rgba(96, 47, 39, 0.92)')
+                .margin({ bottom: 8 })
+
+              Text('加入 NaniYiMiDa 社区')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.55)')
+            }
+            .layoutWeight(1)
+
+            Image(this.showPasswordLogo ? $r('app.media.hide') : $r('app.media.register'))
+              .width(108)
+              .height(108)
+              .objectFit(ImageFit.Contain)
+              .margin({ right: 26 })
+          }
+          .width('100%')
+          .padding({ bottom: 6 })
+
+          // 表单区域
+          Column() {
+            // 用户名输入框
+            Column() {
+              Text('用户名')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.70)')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 8 })
+                .width('100%')
+
+              TextInput({ placeholder: '请输入用户名', text: this.userName })
+                .type(InputType.Normal)
+                .width('100%')
+                .height(52)
+                .fontSize(14)
+                .placeholderColor('rgba(96, 47, 39, 0.32)')
+                .backgroundColor('rgba(250, 246, 240, 0.92)')
+                .borderRadius(16)
+                .padding({ left: 14, right: 14 })
+                .border({ width: 1, color: 'rgba(96, 47, 39, 0.12)' })
+                .shadow({
+                  radius: 10,
+                  color: 'rgba(96, 47, 39, 0.06)',
+                  offsetY: 10
+                })
+                .onChange((value: string) => {
+                  this.userName = value;
+                })
+            }
+            .width('100%')
+            .margin({ bottom: 14 })
+
+            // 手机号输入框
+            Column() {
+              Text('手机号')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.70)')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 8 })
+                .width('100%')
+
+              TextInput({ placeholder: '请输入手机号', text: this.phoneNumber })
+                .type(InputType.PhoneNumber)
+                .width('100%')
+                .height(52)
+                .fontSize(14)
+                .placeholderColor('rgba(96, 47, 39, 0.32)')
+                .backgroundColor('rgba(250, 246, 240, 0.92)')
+                .borderRadius(16)
+                .padding({ left: 14, right: 14 })
+                .border({ width: 1, color: 'rgba(96, 47, 39, 0.12)' })
+                .shadow({
+                  radius: 10,
+                  color: 'rgba(96, 47, 39, 0.06)',
+                  offsetY: 10
+                })
+                .onChange((value: string) => {
+                  this.phoneNumber = value;
+                })
+            }
+            .width('100%')
+            .margin({ bottom: 14 })
+
+            // 密码输入框
+            Column() {
+              Text('密码')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.70)')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 8 })
+                .width('100%')
+
+              Stack() {
+                TextInput({ placeholder: '请输入密码（6~20位）', text: this.password })
+                  .type(this.showPassword ? InputType.Normal : InputType.Password)
+                  .width('100%')
+                  .height(52)
+                  .fontSize(14)
+                  .placeholderColor('rgba(96, 47, 39, 0.32)')
+                  .backgroundColor('rgba(250, 246, 240, 0.92)')
+                  .borderRadius(16)
+                  .padding({ left: 14, right: 56 })
+                  .border({ width: 1, color: 'rgba(96, 47, 39, 0.12)' })
+                  .shadow({
+                    radius: 10,
+                    color: 'rgba(96, 47, 39, 0.06)',
+                    offsetY: 10
+                  })
+                  .onChange((value: string) => {
+                    this.password = value;
+                    this.updateLogoState();
+                  })
+                  .onEditChange((isEditing: boolean) => {
+                    this.isPasswordFocused = isEditing;
+                    if (isEditing) {
+                      this.lastActivePasswordField = 1;
+                    }
+                    this.updateLogoState();
+
+                    if (!isEditing) {
+                      setTimeout(() => {
+                        this.updateLogoState();
+                      }, 100);
+                    }
+                  })
+
+                // 正确位置的眼睛图标
+                Column() {
+                  Button({ type: ButtonType.Normal, stateEffect: false }) {
+                    Text(this.showPassword ? '🙈' : '👁️')
+                      .fontSize(14)
+                  }
+                  .width(34)
+                  .height(34)
+                  .backgroundColor('rgba(242, 229, 211, 0.55)')
+                  .border({
+                    width: 1,
+                    color: 'rgba(96, 47, 39, 0.10)'
+                  })
+                  .borderRadius(10)
+                  .onClick(() => {
+                    this.showPassword = !this.showPassword;
+                    this.lastActivePasswordField = 1;
+                    this.updateLogoState();
+                  })
+                }
+                .width(34)
+                .height(34)
+                .position({ x: '100%', y: '50%' })
+                .translate({ x: -44, y: -17 })
+              }
+              .width('100%')
+              .height(52)
+            }
+            .width('100%')
+            .margin({ bottom: 14 })
+
+            // 确认密码输入框
+            Column() {
+              Text('确认密码')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.70)')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 8 })
+                .width('100%')
+
+              Stack() {
+                TextInput({ placeholder: '请再次输入密码', text: this.confirmPassword })
+                  .type(this.showConfirmPassword ? InputType.Normal : InputType.Password)
+                  .width('100%')
+                  .height(52)
+                  .fontSize(14)
+                  .placeholderColor('rgba(96, 47, 39, 0.32)')
+                  .backgroundColor('rgba(250, 246, 240, 0.92)')
+                  .borderRadius(16)
+                  .padding({ left: 14, right: 56 })
+                  .border({ width: 1, color: 'rgba(96, 47, 39, 0.12)' })
+                  .shadow({
+                    radius: 10,
+                    color: 'rgba(96, 47, 39, 0.06)',
+                    offsetY: 10
+                  })
+                  .onChange((value: string) => {
+                    this.confirmPassword = value;
+                    this.updateLogoState();
+                  })
+                  .onEditChange((isEditing: boolean) => {
+                    this.isConfirmPasswordFocused = isEditing;
+                    if (isEditing) {
+                      this.lastActivePasswordField = 2;
+                    }
+                    this.updateLogoState();
+
+                    if (!isEditing) {
+                      setTimeout(() => {
+                        this.updateLogoState();
+                      }, 100);
+                    }
+                  })
+
+                // 正确位置的眼睛图标
+                Column() {
+                  Button({ type: ButtonType.Normal, stateEffect: false }) {
+                    Text(this.showConfirmPassword ? '🙈' : '👁️')
+                      .fontSize(14)
+                  }
+                  .width(34)
+                  .height(34)
+                  .backgroundColor('rgba(242, 229, 211, 0.55)')
+                  .border({
+                    width: 1,
+                    color: 'rgba(96, 47, 39, 0.10)'
+                  })
+                  .borderRadius(10)
+                  .onClick(() => {
+                    this.showConfirmPassword = !this.showConfirmPassword;
+                    this.lastActivePasswordField = 2;
+                    this.updateLogoState();
+                  })
+                }
+                .width(34)
+                .height(34)
+                .position({ x: '100%', y: '50%' })
+                .translate({ x: -44, y: -17 })
+              }
+              .width('100%')
+              .height(52)
+            }
+            .width('100%')
+            .margin({ bottom: 14 })
+
+            // 注册按钮
+            Button(this.isLoading ? '注册中...' : '注册')
+              .width('100%')
+              .height(54)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .backgroundColor(this.isLoading ? 'rgba(203, 142, 84, 0.5)' : '#CB8E54')
+              .backgroundImage(this.isLoading ? undefined :
+                `linear-gradient(180deg, ${AppColors.C50} 0%, ${AppColors.C70} 100%)`)
+              .borderRadius(22)
+              .shadow({
+                radius: 18,
+                color: 'rgba(168, 88, 53, 0.28)',
+                offsetY: 18
+              })
+              .enabled(!this.isLoading)
+              .onClick(() => {
+                this.handleRegister();
+              })
+              .margin({ top: 10 })
+
+            // 已有账号链接
+            Row() {
+              Text('已有账号？')
+                .fontSize(13)
+                .fontColor('rgba(96, 47, 39, 0.55)')
+
+              Text('去登录')
+                .fontSize(13)
+                .fontColor('rgba(168, 88, 53, 0.95)')
+                .fontWeight(FontWeight.Bold)
+                .margin({ left: 6 })
+                .onClick(() => {
+                  this.goToLogin();
+                })
+            }
+            .justifyContent(FlexAlign.Center)
+            .width('100%')
+            .margin({ top: 10 })
+
+            // 协议文本
+            Row() {
+              Text('注册即表示同意')
+                .fontSize(11)
+                .fontColor('rgba(96, 47, 39, 0.40)')
+
+              Text('《用户协议》')
+                .fontSize(11)
+                .fontColor('rgba(168, 88, 53, 0.90)')
+                .fontWeight(FontWeight.Bold)
+                .onClick(() => {
+                  // 打开用户协议
+                })
+
+              Text('和')
+                .fontSize(11)
+                .fontColor('rgba(96, 47, 39, 0.40)')
+
+              Text('《隐私政策》')
+                .fontSize(11)
+                .fontColor('rgba(168, 88, 53, 0.90)')
+                .fontWeight(FontWeight.Bold)
+                .onClick(() => {
+                  // 打开隐私政策
+                })
+            }
+            .justifyContent(FlexAlign.Center)
+            .width('100%')
+            .margin({ top: 24 })
+            .padding({ left: 10, right: 10 })
+          }
+          .width('100%')
+          .padding({ left: 22, right: 22 })
+        }
+        .width('100%')
+        .padding({ top: 14, bottom: 22 })
       }
-      .width('100%')
-      .padding({ left: 24, right: 24 })
-
-      // 底部登录链接
-      Row() {
-        Text('已有账号？')
-          .fontSize(14)
-          .fontColor('#999999')
-
-        Text('去登录')
-          .fontSize(14)
-          .fontColor('#FF6B35')
-          .fontWeight(FontWeight.Medium)
-          .onClick(() => {
-            this.goToLogin();
-          })
-      }
-      .margin({ top: 24 })
-
-      // 占位，将内容往上推
-      Blank()
-
-      // 底部协议
-      Row() {
-        Text('注册即表示同意')
-          .fontSize(12)
-          .fontColor('#CCCCCC')
-
-        Text('《用户协议》')
-          .fontSize(12)
-          .fontColor('#FF6B35')
-
-        Text('和')
-          .fontSize(12)
-          .fontColor('#CCCCCC')
-
-        Text('《隐私政策》')
-          .fontSize(12)
-          .fontColor('#FF6B35')
-      }
-      .margin({ bottom: 30 })
+      .scrollBar(BarState.Off)
+      .onClick(() => {
+        // 点击页面其他地方时检查
+        this.updateLogoState();
+      })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#FFFFFF')
+    .onClick(() => {
+      // 点击页面其他地方时检查
+      this.updateLogoState();
+    })
   }
 }
