@@ -18,10 +18,14 @@ public class LoginInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String token = extractToken(request);
+        System.out.println("提取的 Token: " + token);
         if (token != null && tokenUtil.verifyToken(token)) {
+            // Token 验证成功
             request.getSession().setAttribute("currentUser", tokenUtil.getUser(token));
             return true;
         } else {
+            // Token 验证失败
+            System.out.println("Token 验证失败: " + token);
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "未登录");
         }
     }

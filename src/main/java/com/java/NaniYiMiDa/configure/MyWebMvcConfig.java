@@ -15,7 +15,15 @@ public class MyWebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/api/users/login", "/api/users/register", "/actuator/health")
+                .excludePathPatterns(
+                        "/api/users/login",
+                        "/api/users/register",
+                        "/actuator/health",
+                        "/api/products/**",
+                        "/api/recipes/search",
+                        "/api/recipes/getRecentRecipe",
+                        "/api/recipes/recipe/**"
+                )
                 .order(1);
     }
 }
