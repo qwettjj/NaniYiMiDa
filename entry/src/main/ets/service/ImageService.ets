@@ -2,9 +2,10 @@
  * 图片上传服务类
  * 对应后端 ToolsController: /api/images
  */
-import { HttpUtil, ResultVO } from './HttpUtil';
+import { HttpUtil, ResultVO, BASE_URL } from './HttpUtil';
 import { request } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { fileIo } from '@kit.CoreFileKit';
 
 /** API 基础路径 */
 const BASE_PATH: string = '/api/images';
@@ -28,19 +29,28 @@ export interface ImageFileInfo {
 export class ImageService {
 
   /**
-   * 上传图片到服务器
+   * 上传图片到服务器 (方案C: 响应头传递 URL)
    * POST /api/images
+   * 
+   * 实现方案：
+   * - 后端：在响应头中添加 X-Image-Url 字段返回 OSS URL
+   * - 前端：监听 headerReceive 事件提取 URL，解决 TaskState 无 response 的问题
+   * 
+   * 优点：
+   * - 使用官方 request.uploadFile() API
+   * - 可获取真实的 OSS URL
+   * - 保持代码简洁性
+   * 
    * @param fileInfo 图片文件信息
-   * @returns 图片 URL
+   * @returns 包含 OSS URL 的 ResultVO
    */
   static async uploadImage(fileInfo: ImageFileInfo): Promise<ResultVO<string>> {
     try {
       const token = await HttpUtil.getToken();
       const uploadConfig: request.UploadConfig = {
-        url: `http://localhost:8080${BASE_PATH}`,
+        url: `${BASE_URL}${BASE_PATH}`,
         header: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'multipart/form-data'
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         method: 'POST',
         files: [
@@ -56,54 +66,100 @@ export class ImageService {
 
       console.info('ImageService: 开始上传图片 -', fileInfo.filename);
 
+      // 使用 Promise 风格的 uploadFile
+      const uploadTask = await request.uploadFile(getContext(), uploadConfig);
+
       return new Promise<ResultVO<string>>((resolve, reject) => {
-        request.uploadFile(getContext(), uploadConfig, (err: BusinessError, uploadTask: request.UploadTask) => {
-          if (err) {
-            console.error('ImageService: 上传失败 -', err.message);
-            reject({
-              code: -1,
-              message: `上传失败: ${err.message}`,
-              data: null
-            } as ResultVO<string>);
-            return;
-          }
+        let imageUrl: string | null = null;
 
-          uploadTask.on('complete', (taskStates: Array<request.TaskState>) => {
-            console.info('ImageService: 上传完成');
-            for (let taskState of taskStates) {
-              if (taskState.response) {
-                try {
-                  const result = JSON.parse(taskState.response) as ResultVO<string>;
-                  console.info('ImageService: 解析结果 -', JSON.stringify(result));
-                  resolve(result);
-                } catch (parseError) {
-                  console.error('ImageService: 解析响应失败');
-                  reject({
-                    code: -1,
-                    message: '解析服务器响应失败',
-                    data: null
-                  } as ResultVO<string>);
-                }
-                return;
-              }
+        // 监听响应头（获取后端返回的 URL）
+        uploadTask.on('headerReceive', (header: object) => {
+          console.info('ImageService: 收到响应头 -', JSON.stringify(header));
+          // 从响应头中提取 X-Image-Url
+          if (header && typeof header === 'object') {
+            const headers = header as Record<string, string | string[]>;
+            const urlHeader = headers['x-image-url'] || headers['X-Image-Url'];
+            if (urlHeader) {
+              imageUrl = Array.isArray(urlHeader) ? urlHeader[0] : urlHeader;
+              console.info('ImageService: 从响应头获取到 URL -', imageUrl);
             }
+          }
+        });
+
+        // 监听上传进度（可选）
+        uploadTask.on('progress', (uploadedSize: number, totalSize: number) => {
+          const progress = Math.floor((uploadedSize / totalSize) * 100);
+          console.info(`ImageService: 上传进度 ${progress}% (${uploadedSize}/${totalSize})`);
+        });
+
+        // 监听上传完成
+        uploadTask.on('complete', (taskStates: Array<request.TaskState>) => {
+          console.info('ImageService: 上传完成事件触发');
+          
+          if (taskStates && taskStates.length > 0) {
+            const state = taskStates[0];
+            console.info(`ImageService: responseCode=${state.responseCode}, message=${state.message}`);
+            
+            // 检查 HTTP 响应码
+            if (state.responseCode === 200) {
+              // 通过 headerReceive 事件已获取到 URL
+              if (imageUrl) {
+                console.info('ImageService: 上传成功，URL -', imageUrl);
+                resolve({
+                  code: 0,
+                  message: '上传成功',
+                  data: imageUrl
+                } as ResultVO<string>);
+              } else {
+                console.warn('ImageService: 上传成功但未从响应头获取到 URL');
+                resolve({
+                  code: 0,
+                  message: '上传成功，但未获取到 URL',
+                  data: `${BASE_URL}/uploaded/${fileInfo.filename}`
+                } as ResultVO<string>);
+              }
+              return;
+            } else {
+              // 非 200 响应码
+              console.error(`ImageService: 上传失败，HTTP ${state.responseCode}`);
+              reject({
+                code: state.responseCode,
+                message: state.message || `上传失败 (HTTP ${state.responseCode})`,
+                data: null
+              } as ResultVO<string>);
+              return;
+            }
+          }
+          
+          // taskStates 为空
+          reject({
+            code: -1,
+            message: '上传完成但无状态信息',
+            data: null
+          } as ResultVO<string>);
+        });
+
+        // 监听上传失败
+        uploadTask.on('fail', (taskStates: Array<request.TaskState>) => {
+          console.error('ImageService: 上传失败事件触发');
+          
+          if (taskStates && taskStates.length > 0) {
+            const state = taskStates[0];
             reject({
-              code: -1,
-              message: '服务器无响应',
+              code: state.responseCode || -1,
+              message: state.message || '上传失败',
               data: null
             } as ResultVO<string>);
-          });
-
-          uploadTask.on('fail', (taskStates: Array<request.TaskState>) => {
-            console.error('ImageService: 上传失败事件触发');
+          } else {
             reject({
               code: -1,
               message: '上传失败',
               data: null
             } as ResultVO<string>);
-          });
+          }
         });
       });
+
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
       console.error('ImageService: 上传异常 -', errorMsg);

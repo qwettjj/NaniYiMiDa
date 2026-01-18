@@ -7,10 +7,10 @@ import { preferences } from '@kit.ArkData';
 
 /** API 基础地址 */
 // 自动检测到的本机局域网 IP，适用于真机和模拟器
-const BASE_URL: string = 'http://127.0.0.1:8080';
-// 备用：如果是 Android 模拟器，可以使用 http://10.0.2.2:8080
+// 真机测试时，请修改为局域网 IP，例如：http://192.168.1.100:8080
+export const BASE_URL: string = 'http://127.0.0.1:8080';
 // 备用：如果是本地 Previewer，可以使用 http://127.0.0.1:8080
-// const BASE_URL: string = 'http://10.0.2.2:8080';
+// export const BASE_URL: string = 'http://10.0.2.2:8080';
 
 /** Token 存储键名 */
 const TOKEN_KEY: string = 'user_token';
